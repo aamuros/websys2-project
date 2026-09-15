@@ -16,6 +16,8 @@ Supabase is used as hosted PostgreSQL. Supabase Auth, Edge Functions, and direct
 - PHP 8.4 with `pdo_pgsql`, `mbstring`, `openssl`, and `intl`
 - Composer 2
 - Node.js 24 and npm 11
+- Supabase CLI 2.105 or newer
+- Docker Desktop, OrbStack, or another Docker-compatible runtime
 - A Supabase project for shared/local PostgreSQL, or SQLite for automated tests only
 - Git; a GitHub repository is recommended for team development and Vercel deployment
 
@@ -28,19 +30,42 @@ git clone <your-github-repository-url>
 cd WebSys2-Project
 composer install
 npm ci
-cp .env.example .env
+cp .env.local.example .env
 php artisan key:generate
 ```
 
-Fill in the Supabase database values in `.env`, then initialize the database:
+Start local Supabase and initialize the database:
 
 ```bash
-php artisan migrate --seed
+composer db:start
+composer db:reset
 ```
 
 The default seeder only installs development data when `APP_ENV` is `local` or `testing`.
 
 ## Supabase PostgreSQL setup
+
+### Local Supabase
+
+The committed `supabase/config.toml` runs a project-scoped local stack with:
+
+- PostgreSQL at `127.0.0.1:54322`
+- Supabase Studio at `http://127.0.0.1:54323`
+- API/Storage gateway at `http://127.0.0.1:54321`
+- A private `community-garden-uploads` bucket reserved for the future Laravel upload workflow
+
+Supabase Auth, Realtime, Edge Functions, Inbucket, analytics, vector services, and the local pooler are disabled because this application does not use them. The local pooler can be enabled later for explicit pooler compatibility testing, but direct PostgreSQL is faster and sufficient for daily local development.
+
+```bash
+composer db:start     # start this project's containers
+composer db:status    # print local service URLs
+composer db:reset     # run Laravel migrate:fresh --seed
+composer db:stop      # stop this project's containers, preserving data
+```
+
+Laravel migrations and seeders remain authoritative; Supabase CLI migrations and `seed.sql` are disabled. The local CLI uses development-only default credentials and services may bind beyond loopback depending on the container runtime, so do not run this stack on an untrusted network.
+
+### Hosted Supabase
 
 1. Create a Supabase project and open its **Connect** panel.
 2. For local migrations, use the direct connection or session pooler when IPv6/network support permits it.
@@ -75,9 +100,10 @@ Production should use `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stde
 
 ## Local development
 
-Run Laravel and Vite in separate terminals:
+Ensure local Supabase is running, then run Laravel and Vite in separate terminals:
 
 ```bash
+composer db:start
 php artisan serve
 npm run dev
 ```
@@ -85,7 +111,7 @@ npm run dev
 Open `http://localhost:8000`. After changing migrations during early development, reset the local database with:
 
 ```bash
-php artisan migrate:fresh --seed
+composer db:reset
 ```
 
 ### Development accounts

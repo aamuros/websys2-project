@@ -45,6 +45,10 @@
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
         ],
+        "db:start": "supabase start",
+        "db:status": "supabase status",
+        "db:reset": "@php artisan migrate:fresh --seed",
+        "db:stop": "supabase stop",
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
