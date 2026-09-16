@@ -55,9 +55,24 @@
 
 @layer base {
     * { @apply border-border outline-ring/50; }
-    html { @apply bg-background; }
-    body { @apply min-h-screen bg-background text-foreground antialiased; }
+    html { @apply bg-primary; }
+    body { @apply min-h-screen bg-primary text-foreground antialiased; }
     button, a { -webkit-tap-highlight-color: transparent; }
+}
+
+.app-scrollbar {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(64 79 29 / 22%) transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar { width: 10px; }
+.app-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.app-scrollbar::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: rgb(64 79 29 / 22%);
+    background-clip: padding-box;
 }
 
 @keyframes rise-in {

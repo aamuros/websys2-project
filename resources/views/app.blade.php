@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#173f35">
+        <meta name="theme-color" content="#404f1d">
         <title inertia>{{ config('app.name', 'Community Garden') }}</title>
         @viteReactRefresh
         @vite(['resources/js/app.tsx'])

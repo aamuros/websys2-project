@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,19 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/{page}', [WorkspaceController::class, 'show'])
+        ->whereIn('page', [
+            'garden-plots',
+            'plot-requests',
+            'assignments',
+            'garden-calendar',
+            'community-updates',
+            'reports',
+            'members',
+            'help',
+            'settings',
+        ])
+        ->name('workspace.page');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::prefix('member')->name('member.')->middleware('role:member')->group(function () {
