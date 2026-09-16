@@ -171,7 +171,11 @@ export function AppLayout({ title, description, actions, children }: PropsWithCh
     return (
         <div className="h-dvh min-h-[480px] overflow-hidden bg-primary">
             <header className="fixed inset-x-0 top-0 z-40 flex h-12 items-center justify-between bg-primary px-5 text-primary-foreground">
-                <Sprout className="size-5 stroke-[1.8]" aria-label="Community Garden" />
+                <img
+                    src="/images/community-garden-logo.png"
+                    alt="Community Garden"
+                    className="size-7 object-contain"
+                />
                 <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
                     <DialogTrigger asChild>
                         <button type="button" className="grid size-9 place-items-center rounded-full transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 lg:hidden" aria-label="Open navigation">
