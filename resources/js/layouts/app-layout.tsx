@@ -11,7 +11,6 @@ import {
     Map,
     Megaphone,
     Menu,
-    Plus,
     Search,
     Settings,
     Sprout,
@@ -27,6 +26,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { QuickCreateDialog } from '@/components/quick-create-dialog';
 import { cn } from '@/lib/utils';
 import type { SharedPageProps } from '@/types';
 
@@ -143,10 +143,7 @@ function DefaultPageActions() {
                 <Search className="size-4 shrink-0" aria-hidden="true" />
                 <input type="search" placeholder="Search" aria-label="Search this page" className="h-[30px] min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-muted-foreground/70" />
             </label>
-            <button type="button" className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[10px] border border-primary bg-primary px-2.5 text-sm font-medium text-primary-foreground shadow-[0_1px_1px_rgba(64,79,29,0.14)] transition-[background-color,transform] hover:-translate-y-px hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
-                <Plus className="size-4" />
-                <span>New</span>
-            </button>
+            <QuickCreateDialog />
         </div>
     );
 }
