@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,12 +20,37 @@ class WorkspaceController extends Controller
         'settings' => ['title' => 'Settings', 'description' => 'Manage your account and workspace preferences.'],
     ];
 
-    public function show(string $page): Response
+    private const PAGE_ROLES = [
+        'garden-plots' => ['member', 'staff', 'admin'],
+        'plot-requests' => ['member', 'staff', 'admin'],
+        'assignments' => ['member', 'staff', 'admin'],
+        'garden-calendar' => ['member', 'staff', 'admin'],
+        'community-updates' => ['member', 'staff', 'admin'],
+        'reports' => ['staff', 'admin'],
+        'members' => ['admin'],
+        'help' => ['member', 'staff', 'admin'],
+        'settings' => ['member', 'staff', 'admin'],
+    ];
+
+    private const MEMBER_PAGES = [
+        'garden-plots' => ['title' => 'Garden plots', 'description' => 'Browse available plots and view how they are currently used.'],
+        'plot-requests' => ['title' => 'My plot requests', 'description' => 'Submit and track your requests for a community garden plot.'],
+        'assignments' => ['title' => 'My assignments', 'description' => 'View your current plot assignment and renewal dates.'],
+        'garden-calendar' => ['title' => 'Garden calendar', 'description' => 'View upcoming events, maintenance, and shared work days.'],
+        'community-updates' => ['title' => 'Community updates', 'description' => 'Read the latest news from the community garden.'],
+    ];
+
+    public function show(Request $request, string $page): Response
     {
         abort_unless(array_key_exists($page, self::PAGES), 404);
+        abort_unless(in_array($request->user()->role->value, self::PAGE_ROLES[$page], true), 403);
+
+        $content = $request->user()->role->value === 'member'
+            ? self::MEMBER_PAGES[$page] ?? self::PAGES[$page]
+            : self::PAGES[$page];
 
         return Inertia::render('workspace-page', [
-            ...self::PAGES[$page],
+            ...$content,
             'page' => $page,
         ]);
     }

@@ -135,6 +135,24 @@ Public registration always creates a `member` account. Admin and staff roles mus
 
 Login redirects directly to the user's role dashboard. Laravel's web middleware supplies encrypted cookies, database sessions, and CSRF protection. `EnsureUserHasRole` provides the initial role boundary without an RBAC package.
 
+### Role navigation
+
+The application shell is shared, but workspace navigation and server-side page access are limited by role:
+
+| Page | Member | Staff | Admin |
+| --- | :---: | :---: | :---: |
+| Dashboard | Yes | Yes | Yes |
+| Garden plots | Yes | Yes | Yes |
+| Plot requests | Own | Yes | Yes |
+| Assignments | Own | Yes | Yes |
+| Garden calendar | Yes | Yes | Yes |
+| Community updates | Yes | Yes | Yes |
+| Reports | No | Yes | Yes |
+| Members | No | No | Yes |
+| Help center and settings | Yes | Yes | Yes |
+
+Members see personal labels and content for their plot requests and assignments. Hiding a navigation item does not grant or revoke access by itself; Laravel enforces the same matrix for direct URL requests.
+
 ## Database foundation
 
 The initial schema is deliberately limited to:

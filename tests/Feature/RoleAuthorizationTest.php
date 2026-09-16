@@ -11,12 +11,15 @@ class RoleAuthorizationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_authenticated_users_can_open_the_shared_dashboard(): void
+    public function test_shared_dashboard_redirects_to_the_users_role_dashboard(): void
     {
-        $this->actingAs(User::factory()->create())
-            ->get('/dashboard')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('dashboard'));
+        foreach (UserRole::cases() as $role) {
+            $user = User::factory()->create(['role' => $role]);
+
+            $this->actingAs($user)
+                ->get('/dashboard')
+                ->assertRedirect('/'.$role->value.'/dashboard');
+        }
     }
 
     public function test_role_dashboards_require_the_matching_role(): void

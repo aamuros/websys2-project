@@ -28,17 +28,22 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import type { SharedPageProps } from '@/types';
+import type { SharedPageProps, UserRole } from '@/types';
 
-const navigationItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Garden plots', href: '/garden-plots', icon: Map },
-    { label: 'Plot requests', href: '/plot-requests', icon: ClipboardList },
-    { label: 'Assignments', href: '/assignments', icon: Sprout },
-    { label: 'Garden calendar', href: '/garden-calendar', icon: CalendarDays },
-    { label: 'Community updates', href: '/community-updates', icon: Megaphone },
-    { label: 'Reports', href: '/reports', icon: FileChartColumn },
-    { label: 'Members', href: '/members', icon: UsersRound },
+const navigationItems: Array<{
+    label: string;
+    memberLabel?: string;
+    href: string;
+    icon: typeof LayoutDashboard;
+    roles: UserRole[];
+}> = [
+    { label: 'Garden plots', href: '/garden-plots', icon: Map, roles: ['member', 'staff', 'admin'] },
+    { label: 'Plot requests', memberLabel: 'My plot requests', href: '/plot-requests', icon: ClipboardList, roles: ['member', 'staff', 'admin'] },
+    { label: 'Assignments', memberLabel: 'My assignments', href: '/assignments', icon: Sprout, roles: ['member', 'staff', 'admin'] },
+    { label: 'Garden calendar', href: '/garden-calendar', icon: CalendarDays, roles: ['member', 'staff', 'admin'] },
+    { label: 'Community updates', href: '/community-updates', icon: Megaphone, roles: ['member', 'staff', 'admin'] },
+    { label: 'Reports', href: '/reports', icon: FileChartColumn, roles: ['staff', 'admin'] },
+    { label: 'Members', href: '/members', icon: UsersRound, roles: ['admin'] },
 ];
 
 const utilityItems = [
@@ -86,18 +91,23 @@ function AccountMenu() {
 }
 
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+    const { auth } = usePage<SharedPageProps>().props;
+    const role = auth.user!.role;
     const currentUrl = usePage().url.split('?')[0];
-    const isActive = (href: string) => href === '/dashboard'
-        ? currentUrl === href || currentUrl.endsWith('/dashboard')
-        : currentUrl === href;
+    const dashboardHref = `/${role}/dashboard`;
+    const isActive = (href: string) => currentUrl === href;
 
     return (
         <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2" aria-label="Primary navigation">
             <div className="space-y-0.5 px-1 py-2">
-                {navigationItems.map(({ label, href, icon: Icon }) => (
+                <Link href={dashboardHref} onClick={onNavigate} className={navItemClass(isActive(dashboardHref))} aria-current={isActive(dashboardHref) ? 'page' : undefined}>
+                    <LayoutDashboard className="size-4 shrink-0 stroke-[1.9]" />
+                    <span className="truncate">Dashboard</span>
+                </Link>
+                {navigationItems.filter((item) => item.roles.includes(role)).map(({ label, memberLabel, href, icon: Icon }) => (
                     <Link key={href} href={href} onClick={onNavigate} className={navItemClass(isActive(href))} aria-current={isActive(href) ? 'page' : undefined}>
                         <Icon className="size-4 shrink-0 stroke-[1.9]" />
-                        <span className="truncate">{label}</span>
+                        <span className="truncate">{role === 'member' && memberLabel ? memberLabel : label}</span>
                     </Link>
                 ))}
             </div>
