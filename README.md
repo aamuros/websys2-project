@@ -100,13 +100,14 @@ Production should use `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stde
 
 ## Local development
 
-Ensure local Supabase is running, then run Laravel and Vite in separate terminals:
+Ensure local Supabase is running, then start Laravel and Vite together:
 
 ```bash
 composer db:start
-php artisan serve
-npm run dev
+composer run dev
 ```
+
+Keep `composer run dev` running while developing. It starts Laravel, Vite hot reload, the queue listener, and the application log stream. Running only `php artisan serve` falls back to the last production bundle in `public/build`, so frontend source changes will not update automatically.
 
 Open `http://localhost:8000`. After changing migrations during early development, reset the local database with:
 

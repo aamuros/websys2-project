@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GardenPlotController;
+use App\Http\Controllers\PlotRequestController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +22,14 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/garden-plots', [GardenPlotController::class, 'index'])->name('garden-plots.index');
+        Route::post('/plot-requests', [PlotRequestController::class, 'store'])
+            ->middleware('role:member')
+            ->name('plot-requests.store');
+    });
+
     Route::get('/{page}', [WorkspaceController::class, 'show'])
         ->whereIn('page', [
             'garden-plots',

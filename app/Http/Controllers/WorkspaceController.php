@@ -49,9 +49,32 @@ class WorkspaceController extends Controller
             ? self::MEMBER_PAGES[$page] ?? self::PAGES[$page]
             : self::PAGES[$page];
 
-        return Inertia::render('workspace-page', [
+        $props = [
             ...$content,
             'page' => $page,
-        ]);
+        ];
+
+        if ($page === 'plot-requests' && $request->user()->role->value === 'member') {
+            $props['plotRequests'] = $request->user()
+                ->plotRequests()
+                ->with('gardenPlot:id,plot_code,location,size,status')
+                ->latest()
+                ->get()
+                ->map(fn ($plotRequest) => [
+                    'id' => $plotRequest->id,
+                    'status' => $plotRequest->status->value,
+                    'notes' => $plotRequest->notes,
+                    'submitted_at' => $plotRequest->created_at->toIso8601String(),
+                    'updated_at' => $plotRequest->updated_at->toIso8601String(),
+                    'plot' => $plotRequest->gardenPlot ? [
+                        'plot_code' => $plotRequest->gardenPlot->plot_code,
+                        'location' => $plotRequest->gardenPlot->location,
+                        'size' => (float) $plotRequest->gardenPlot->size,
+                        'status' => $plotRequest->gardenPlot->status->value,
+                    ] : null,
+                ]);
+        }
+
+        return Inertia::render('workspace-page', $props);
     }
 }

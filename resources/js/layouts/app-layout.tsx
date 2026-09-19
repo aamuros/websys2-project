@@ -11,8 +11,6 @@ import {
     Map,
     Megaphone,
     Menu,
-    Plus,
-    Search,
     Settings,
     Sprout,
     UsersRound,
@@ -90,6 +88,36 @@ function AccountMenu() {
     );
 }
 
+function NotificationMenu() {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger className="relative grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-primary/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" aria-label="Open notifications">
+                <Bell className="size-5 stroke-[1.8]" />
+                <span className="absolute right-2 top-2 size-1.5 rounded-full bg-destructive ring-2 ring-background" aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={7} className="w-72 rounded-xl p-1.5">
+                <DropdownMenuLabel className="px-2 py-2">
+                    <span className="block">Notifications</span>
+                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Two garden updates need your attention.</span>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="items-start rounded-lg py-2.5">
+                    <Link href="/community-updates">
+                        <Megaphone className="mt-0.5" />
+                        <span><span className="block font-medium">Watering hours changed</span><span className="mt-0.5 block text-xs text-muted-foreground">View the latest community update</span></span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="items-start rounded-lg py-2.5">
+                    <Link href="/garden-calendar">
+                        <CalendarDays className="mt-0.5" />
+                        <span><span className="block font-medium">Community workday</span><span className="mt-0.5 block text-xs text-muted-foreground">See the upcoming garden schedule</span></span>
+                    </Link>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const role = auth.user!.role;
@@ -137,26 +165,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <div className="flex h-full min-h-0 flex-col">
             <div className="flex h-[52px] shrink-0 items-center justify-between gap-1 px-3 py-2">
                 <AccountMenu />
-                <button type="button" className="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-primary/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" aria-label="Notifications" title="Notifications">
-                    <Bell className="size-5 stroke-[1.8]" />
-                </button>
+                <NotificationMenu />
             </div>
             <Navigation onNavigate={onNavigate} />
-        </div>
-    );
-}
-
-function DefaultPageActions() {
-    return (
-        <div className="flex w-full items-center gap-2 sm:w-auto" aria-label="Page actions">
-            <label className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-primary/10 bg-card/70 px-2.5 text-muted-foreground shadow-[0_1px_2px_rgba(64,79,29,0.04)] sm:w-52 sm:flex-none">
-                <Search className="size-4 shrink-0" aria-hidden="true" />
-                <input type="search" placeholder="Search" aria-label="Search this page" className="h-[30px] min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none placeholder:text-muted-foreground/70" />
-            </label>
-            <button type="button" className="inline-flex h-8 shrink-0 items-center gap-2 rounded-[10px] border border-primary bg-primary px-2.5 text-sm font-medium text-primary-foreground shadow-[0_1px_1px_rgba(64,79,29,0.14)] transition-[background-color,transform] hover:-translate-y-px hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
-                <Plus className="size-4" />
-                <span>New</span>
-            </button>
         </div>
     );
 }
@@ -169,7 +180,7 @@ function EmptyState() {
                     <Sprout className="size-5 stroke-[1.8]" />
                 </span>
                 <h2 className="mt-4 text-base font-semibold text-foreground">Nothing here yet</h2>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground">Use New to add the first item to this page.</p>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">Content for this workspace will appear here when it becomes available.</p>
             </div>
         </div>
     );
@@ -210,7 +221,7 @@ export function AppLayout({ title, description, actions, children }: PropsWithCh
                             <h1 className="text-xl font-semibold leading-7 tracking-[-0.0175em] text-foreground">{title}</h1>
                             <p className="text-sm leading-5 text-muted-foreground">{description}</p>
                         </div>
-                        <div className="w-full shrink-0 sm:w-auto">{actions ?? <DefaultPageActions />}</div>
+                        {actions && <div className="w-full shrink-0 sm:w-auto">{actions}</div>}
                     </div>
                     <div className="mx-auto w-full max-w-[1151px] animate-rise-in">{children ?? <EmptyState />}</div>
                 </main>
