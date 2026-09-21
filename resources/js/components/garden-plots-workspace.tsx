@@ -1,18 +1,18 @@
 import { usePage } from '@inertiajs/react';
 import {
+    ArrowRight,
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
     CloudRain,
     CloudSun,
     Droplets,
     LoaderCircle,
-    MapPin,
     RefreshCw,
-    Ruler,
     Search,
     Send,
     Sprout,
     Wind,
-    X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -91,6 +91,15 @@ const statusStyles: Record<PlotStatus, string> = {
 
 function humanizeStatus(status: PlotStatus) {
     return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function plotSection(location: string) {
+    return `${location.split(' ')[0]} section`;
+}
+
+function plotMonogram(plotCode: string) {
+    const [prefix, number] = plotCode.split('-');
+    return `${prefix}${Number(number) || number}`;
 }
 
 function weatherDescription(code: number) {
@@ -172,7 +181,7 @@ function GardenWeather() {
                     </span>
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">Live API data · Manila</p>
-                        <h2 id="garden-weather-title" className="mt-2 text-xl font-semibold tracking-[-0.02em] sm:text-2xl">Garden conditions</h2>
+                        <h2 id="garden-weather-title" className="mt-2 text-xl font-[750] tracking-[-0.02em] sm:text-2xl">Garden conditions</h2>
                         {loading && <p className="mt-2 text-sm text-primary-foreground/65">Checking the latest weather…</p>}
                         {!loading && weather && (
                             <p className="mt-2 text-sm text-primary-foreground/70">
@@ -207,7 +216,7 @@ function WeatherMetric({ label, value, icon: Icon }: { label: string; value: str
     return (
         <div className="flex min-w-0 flex-col justify-center border-l border-white/10 px-3 py-6 first:border-l-0 sm:px-5 md:py-8">
             <Icon className="size-4 text-primary-foreground/55" aria-hidden="true" />
-            <span className="mt-3 truncate text-lg font-semibold sm:text-xl">{value}</span>
+            <span className="mt-3 truncate text-lg font-bold sm:text-xl">{value}</span>
             <span className="mt-1 truncate text-[10px] font-medium uppercase tracking-[0.1em] text-primary-foreground/55 sm:text-xs">{label}</span>
         </div>
     );
@@ -359,6 +368,7 @@ export function GardenPlotsWorkspace({ title, description }: { title: string; de
     const [status, setStatus] = useState<StatusFilter>('all');
     const [selectedPlot, setSelectedPlot] = useState<GardenPlot | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [featuredIndex, setFeaturedIndex] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -403,7 +413,7 @@ export function GardenPlotsWorkspace({ title, description }: { title: string; de
         });
     }, [plots, query, status]);
 
-    const availableCount = plots.filter((plot) => plot.status === 'available').length;
+    const featuredPlots = plots.filter((plot) => plot.status === 'available');
     const hasFilters = query.trim() !== '' || status !== 'all';
 
     function markRequestSubmitted(plot: GardenPlot, message: string) {
@@ -413,59 +423,122 @@ export function GardenPlotsWorkspace({ title, description }: { title: string; de
     }
 
     return (
-        <AppLayout title={title} description={description}>
-            <div className="space-y-8 pb-12 sm:space-y-10">
+        <AppLayout
+            title={title}
+            description={description}
+            actions={(
+                <label className="relative block w-full sm:w-[233px]" role="search">
+                    <span className="sr-only">Search plots by code or location</span>
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                    <input
+                        type="search"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder="Search code or location"
+                        className="h-10 w-full rounded-full border border-input bg-card pl-9 pr-3.5 text-sm text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.10),0_1px_2px_-1px_rgba(0,0,0,0.10)] outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+                    />
+                </label>
+            )}
+        >
+            <div className="pb-9">
                 <GardenWeather />
 
                 {successMessage && (
-                    <Alert className="border-primary/20 bg-primary/[0.055]" aria-live="polite">
+                    <Alert className="mt-6 border-primary/20 bg-primary/[0.055]" aria-live="polite">
                         <CheckCircle2 className="text-primary" aria-hidden="true" />
                         <AlertTitle>Request received</AlertTitle>
                         <AlertDescription>{successMessage} Garden staff can now review it.</AlertDescription>
                     </Alert>
                 )}
 
-                <section aria-labelledby="plot-directory-title">
-                    <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <section className="pt-8" aria-labelledby="featured-plots-title">
+                    <div className="flex h-11 items-center pb-3">
+                        <h2 id="featured-plots-title" className="text-base font-[750] leading-4 text-foreground">Featured plots available</h2>
+                        <div className="ml-auto flex h-8 gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setFeaturedIndex((value) => Math.max(0, value - 1))}
+                                disabled={featuredIndex === 0}
+                                className="grid size-8 place-items-center rounded-[10px] text-muted-foreground transition-colors hover:bg-primary/[0.08] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-35 disabled:hover:bg-transparent"
+                                aria-label="Previous featured plot"
+                            >
+                                <ChevronLeft className="size-[18px]" aria-hidden="true" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFeaturedIndex((value) => Math.min(Math.max(0, featuredPlots.length - 1), value + 1))}
+                                disabled={featuredIndex >= featuredPlots.length - 1}
+                                className="grid size-8 place-items-center rounded-[10px] text-muted-foreground transition-colors hover:bg-primary/[0.08] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-35 disabled:hover:bg-transparent"
+                                aria-label="Next featured plot"
+                            >
+                                <ChevronRight className="size-[18px]" aria-hidden="true" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden">
+                        <div className="flex min-h-[225px] gap-3 transition-transform duration-200 ease-out" style={{ transform: `translateX(-${featuredIndex * 237}px)` }}>
+                            {loading && Array.from({ length: 2 }, (_, index) => <div key={index} className="h-[225px] w-[225px] shrink-0 animate-pulse rounded-[14px] bg-primary/[0.08]" />)}
+                            {!loading && featuredPlots.map((plot) => (
+                                <a
+                                    key={plot.id}
+                                    href={`#plot-${plot.plot_code.toLocaleLowerCase()}`}
+                                    className="group relative h-[225px] w-[225px] shrink-0 overflow-hidden rounded-[14px] border border-primary/[0.08] bg-[#afb397] shadow-[0_1px_3px_rgba(64,79,29,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                                >
+                                    <span className="absolute inset-0 bg-[linear-gradient(145deg,#d7d4c1_0%,#b7bea0_43%,#738052_100%)]" aria-hidden="true" />
+                                    <span
+                                        className="absolute bottom-10 left-[18px] right-[18px] top-[18px] rounded-[10px] border border-background/35"
+                                        style={{ backgroundImage: 'repeating-linear-gradient(90deg,rgba(244,237,230,.30) 0 2px,transparent 2px 31px),repeating-linear-gradient(0deg,rgba(244,237,230,.25) 0 2px,transparent 2px 30px),linear-gradient(135deg,rgba(126,93,58,.56),rgba(79,104,52,.45))' }}
+                                        aria-hidden="true"
+                                    />
+                                    <span className="absolute left-[18px] top-[18px] rounded-full border border-border/75 bg-background/90 px-2 py-1 text-[10px] font-semibold leading-[14px] text-foreground shadow-sm">Plot photo placeholder</span>
+                                    <span className="absolute inset-0 bg-gradient-to-t from-primary/30 to-transparent to-55%" aria-hidden="true" />
+                                    <span className="absolute bottom-2.5 left-2.5 right-2.5 z-[2] min-h-14 rounded-[10px] border border-background/30 bg-primary/[0.84] px-3 py-2 shadow-[0_8px_20px_rgba(45,56,20,0.12)] backdrop-blur-xl">
+                                        <span className="block text-sm font-semibold leading-5 text-primary-foreground">Plot {plot.plot_code}</span>
+                                        <span className="mt-px flex items-center gap-1 text-xs font-medium leading-4 text-primary-foreground/75">
+                                            <span>{plot.location} · {plot.size.toFixed(2)} m²</span>
+                                            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                                        </span>
+                                    </span>
+                                </a>
+                            ))}
+                            {!loading && featuredPlots.length === 0 && (
+                                <div className="grid h-[225px] w-full place-items-center rounded-[14px] border border-dashed border-border bg-card/55 text-sm text-muted-foreground">No available plots to feature.</div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="pt-[34px]" aria-labelledby="plot-directory-title">
+                    <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Plot directory</p>
-                            <h2 id="plot-directory-title" className="mt-1 text-xl font-semibold tracking-[-0.025em] text-foreground">Find your growing space</h2>
-                            <p className="mt-1 text-sm text-muted-foreground">{availableCount} of {plots.length} plots currently available.</p>
+                            <h2 id="plot-directory-title" className="mt-[3px] text-xl font-[750] leading-7 tracking-[-0.025em] text-foreground">Find your growing space</h2>
                         </div>
 
-                        <div className="grid gap-2 sm:grid-cols-[minmax(210px,1fr)_150px]" role="search">
-                            <label className="relative block">
-                                <span className="sr-only">Search plots by code or location</span>
-                                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                                <input
-                                    type="search"
-                                    value={query}
-                                    onChange={(event) => setQuery(event.target.value)}
-                                    placeholder="Search code or location"
-                                    className="h-10 w-full rounded-xl border border-input bg-card pl-9 pr-9 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
-                                />
-                                {query && (
-                                    <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-primary/[0.07] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
-                                        <X className="size-3.5" aria-hidden="true" />
-                                    </button>
-                                )}
-                            </label>
-                            <label>
-                                <span className="sr-only">Filter plots by status</span>
-                                <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground shadow-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/20">
-                                    {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                                </select>
-                            </label>
+                        <div className="flex min-h-10 flex-wrap items-center gap-1 sm:justify-end" role="tablist" aria-label="Filter plots by status">
+                            {statusOptions.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={status === option.value}
+                                    onClick={() => setStatus(option.value)}
+                                    className={cn(
+                                        'h-9 whitespace-nowrap rounded-full px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-primary/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                                        status === option.value && 'bg-primary/[0.09] font-semibold text-foreground',
+                                    )}
+                                >
+                                    {option.label.replace(' statuses', '')}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="flex min-h-10 items-center justify-between gap-4 py-3 text-sm text-muted-foreground" aria-live="polite">
-                        <p>{loading ? 'Loading plots…' : `${filteredPlots.length} ${filteredPlots.length === 1 ? 'plot' : 'plots'} shown`}</p>
-                        {hasFilters && <button type="button" onClick={() => { setQuery(''); setStatus('all'); }} className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">Clear filters</button>}
-                    </div>
+                    <p className="sr-only" aria-live="polite">{loading ? 'Loading plots…' : `${filteredPlots.length} ${filteredPlots.length === 1 ? 'plot' : 'plots'} shown`}</p>
 
                     {loadError && (
-                        <Alert variant="destructive" className="mt-2">
+                        <Alert variant="destructive">
                             <AlertTitle>Could not load plots</AlertTitle>
                             <AlertDescription className="flex flex-wrap items-center gap-3">
                                 <span>{loadError}</span>
@@ -477,53 +550,69 @@ export function GardenPlotsWorkspace({ title, description }: { title: string; de
                     )}
 
                     {loading && (
-                        <div className="grid min-h-52 place-items-center border-y border-border text-sm text-muted-foreground">
+                        <div className="grid min-h-52 place-items-center rounded-2xl border border-border bg-card text-sm text-muted-foreground">
                             <span className="inline-flex items-center gap-2"><LoaderCircle className="size-4 animate-spin" aria-hidden="true" />Retrieving plots with fetch…</span>
                         </div>
                     )}
 
                     {!loading && !loadError && filteredPlots.length === 0 && (
-                        <div className="grid min-h-52 place-items-center border-y border-border px-4 text-center">
+                        <div className="grid min-h-52 place-items-center rounded-2xl border border-dashed border-border bg-card/55 px-4 text-center">
                             <div>
                                 <Search className="mx-auto size-5 text-muted-foreground" aria-hidden="true" />
-                                <p className="mt-3 font-semibold text-foreground">No matching plots</p>
+                                <p className="mt-3 font-bold text-foreground">No matching plots</p>
                                 <p className="mt-1 text-sm text-muted-foreground">Try a different plot code, location, or status.</p>
+                                {hasFilters && <button type="button" onClick={() => { setQuery(''); setStatus('all'); }} className="mt-3 text-sm font-semibold text-primary underline underline-offset-4">Clear filters</button>}
                             </div>
                         </div>
                     )}
 
                     {!loading && !loadError && filteredPlots.length > 0 && (
-                        <div className="border-y border-border">
-                            <div className="hidden grid-cols-[minmax(145px,1.2fr)_minmax(130px,1fr)_90px_120px_150px] gap-4 border-b border-border px-2 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground md:grid" aria-hidden="true">
-                                <span>Plot</span><span>Location</span><span>Size</span><span>Status</span><span className="text-right">Action</span>
-                            </div>
-                            <ul className="divide-y divide-border">
-                                {filteredPlots.map((plot) => {
-                                    const requestSubmitted = plot.has_pending_request;
-                                    return (
-                                        <li key={plot.id} className="grid gap-4 px-2 py-5 transition-colors hover:bg-primary/[0.025] md:grid-cols-[minmax(145px,1.2fr)_minmax(130px,1fr)_90px_120px_150px] md:items-center">
-                                            <div className="min-w-0">
-                                                <p className="font-semibold text-foreground">Plot {plot.plot_code}</p>
-                                                <p className="mt-1 text-xs text-muted-foreground md:hidden">Community growing bed</p>
+                        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {filteredPlots.map((plot) => {
+                                const requestSubmitted = plot.has_pending_request;
+                                return (
+                                    <li id={`plot-${plot.plot_code.toLocaleLowerCase()}`} key={plot.id} className="h-[244px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgba(64,79,29,0.05)] transition-[border-color,box-shadow] hover:border-[#c6bfae] hover:shadow-[0_4px_14px_rgba(64,79,29,0.07)]">
+                                        <article className="relative flex h-full flex-col items-start p-5">
+                                            <div className="h-16 w-full">
+                                                <span className="relative grid size-12 place-items-center rounded-xl border border-primary/[0.08] bg-primary/[0.09] text-xs font-bold tracking-[0.04em] text-primary">
+                                                    {plotMonogram(plot.plot_code)}
+                                                    <span className="absolute inset-2 rounded-[4px] border border-primary/30" style={{ backgroundImage: 'repeating-linear-gradient(90deg,transparent 0 8px,rgba(64,79,29,.14) 8px 9px),repeating-linear-gradient(0deg,transparent 0 8px,rgba(64,79,29,.14) 8px 9px)' }} aria-hidden="true" />
+                                                </span>
                                             </div>
-                                            <p className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground"><MapPin className="size-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{plot.location}</span></p>
-                                            <p className="flex items-center gap-2 text-sm text-muted-foreground"><Ruler className="size-3.5 shrink-0" aria-hidden="true" />{plot.size.toFixed(2)} m²</p>
-                                            <div><span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-semibold', statusStyles[plot.status])}>{humanizeStatus(plot.status)}</span></div>
-                                            <div className="md:text-right">
+
+                                            <div className="flex h-[26px] w-full items-center justify-between gap-2.5">
+                                                <h3 className="text-base font-bold leading-6 text-foreground">Plot {plot.plot_code}</h3>
+                                                <span className={cn('inline-flex min-h-6 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-4', statusStyles[plot.status])}>{humanizeStatus(plot.status)}</span>
+                                            </div>
+
+                                            <p className="h-[67px] w-full overflow-hidden pt-2 text-sm leading-5 text-muted-foreground">
+                                                {plot.location}<br />
+                                                <strong className="font-semibold text-foreground">{plot.size.toFixed(2)} m²</strong> · {plotSection(plot.location)}
+                                            </p>
+
+                                            <div className="flex min-h-0 w-full flex-1 items-end">
                                                 {isMember && plot.status === 'available' ? (
-                                                    <Button type="button" size="sm" variant={requestSubmitted ? 'secondary' : 'default'} disabled={requestSubmitted} onClick={() => setSelectedPlot(plot)} className="w-full md:w-auto">
-                                                        {requestSubmitted ? <CheckCircle2 aria-hidden="true" /> : <Sprout aria-hidden="true" />}
+                                                    <button
+                                                        type="button"
+                                                        disabled={requestSubmitted}
+                                                        onClick={() => setSelectedPlot(plot)}
+                                                        className={cn(
+                                                            'flex h-9 w-full items-center justify-center gap-2 rounded-[14px] px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                                                            requestSubmitted ? 'cursor-default bg-secondary text-foreground opacity-50' : 'bg-primary text-primary-foreground hover:bg-[#354318]',
+                                                        )}
+                                                    >
+                                                        {requestSubmitted ? <CheckCircle2 className="size-4" aria-hidden="true" /> : <Sprout className="size-4" aria-hidden="true" />}
                                                         {requestSubmitted ? 'Requested' : 'Request plot'}
-                                                    </Button>
+                                                    </button>
                                                 ) : (
-                                                    <span className="text-xs font-medium text-muted-foreground">{isMember ? 'Not open' : 'Member requests only'}</span>
+                                                    <span className="flex h-9 w-full items-center justify-end pr-0.5 text-xs font-medium text-muted-foreground">{isMember ? 'Not open' : 'Member requests only'}</span>
                                                 )}
                                             </div>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
+                                        </article>
+                                    </li>
+                                );
+                            })}
+                        </ul>
                     )}
                 </section>
             </div>

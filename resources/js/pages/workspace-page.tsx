@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { GardenCalendarWorkspace } from '@/components/garden-calendar-workspace';
 import { GardenPlotsWorkspace } from '@/components/garden-plots-workspace';
 import { PlotRequestsWorkspace, type PlotRequest } from '@/components/plot-requests-workspace';
 import { AppLayout } from '@/layouts/app-layout';
@@ -28,6 +29,15 @@ export default function WorkspacePage({
             <>
                 <Head title={title} />
                 <PlotRequestsWorkspace title={title} description={description} requests={plotRequests} />
+            </>
+        );
+    }
+
+    if (page === 'garden-calendar') {
+        return (
+            <>
+                <Head title={title} />
+                <GardenCalendarWorkspace title={title} description={description} />
             </>
         );
     }

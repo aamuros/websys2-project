@@ -52,7 +52,7 @@ const utilityItems = [
 const navItemClass = (active: boolean) => cn(
     'flex h-8 items-center gap-2 rounded-[10px] px-2 text-sm font-medium transition-[background-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
     active
-        ? 'bg-primary/[0.075] font-semibold text-foreground'
+        ? 'bg-primary/[0.075] font-[650] text-foreground'
         : 'text-muted-foreground hover:bg-primary/[0.07] hover:text-foreground active:translate-x-px',
 );
 
@@ -67,7 +67,7 @@ function AccountMenu() {
                     {user.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
-                    <span className="truncate text-sm font-medium tracking-[0.01em] text-muted-foreground">{user.name}</span>
+                    <span className="truncate text-sm font-semibold tracking-[0.01em] text-muted-foreground">{user.name}</span>
                     <ChevronDown className="size-4 shrink-0 stroke-[1.8] text-muted-foreground" />
                 </span>
             </DropdownMenuTrigger>
@@ -175,12 +175,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 function EmptyState() {
     return (
         <div className="flex min-h-[calc(100dvh-220px)] items-center justify-center pb-16 sm:min-h-[calc(100dvh-188px)]">
-            <div className="max-w-sm text-center">
-                <span className="mx-auto grid size-11 place-items-center rounded-full bg-primary/[0.08] text-primary">
-                    <Sprout className="size-5 stroke-[1.8]" />
+            <div className="w-full max-w-sm text-center">
+                <span className="mx-auto grid size-14 place-items-center rounded-full bg-primary/[0.08] text-primary">
+                    <Sprout className="size-6 stroke-[1.8]" />
                 </span>
-                <h2 className="mt-4 text-base font-semibold text-foreground">Nothing here yet</h2>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground">Content for this workspace will appear here when it becomes available.</p>
+                <h2 className="mt-5 text-lg font-[750] tracking-[-0.015em] text-foreground">Nothing here yet</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Content for this workspace will appear here when it becomes available.</p>
             </div>
         </div>
     );
@@ -216,10 +216,10 @@ export function AppLayout({ title, description, actions, children }: PropsWithCh
                 </aside>
 
                 <main className="app-scrollbar h-full overflow-y-auto overscroll-contain bg-background px-4 sm:px-6 lg:px-10 lg:pl-[296px]">
-                    <div className="mx-auto flex min-h-24 w-full max-w-[1151px] flex-col justify-center gap-3 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:py-6">
+                    <div className="mx-auto flex min-h-[89px] w-full max-w-[1151px] flex-col justify-center gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
                         <div className="min-w-0 flex-1 sm:pr-4">
-                            <h1 className="text-xl font-semibold leading-7 tracking-[-0.0175em] text-foreground">{title}</h1>
-                            <p className="text-sm leading-5 text-muted-foreground">{description}</p>
+                            <h1 className="text-2xl font-[750] leading-[30px] tracking-[-0.01875em] text-foreground">{title}</h1>
+                            <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
                         </div>
                         {actions && <div className="w-full shrink-0 sm:w-auto">{actions}</div>}
                     </div>

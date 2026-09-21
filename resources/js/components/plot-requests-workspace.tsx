@@ -120,7 +120,7 @@ function RequestProgress({ request }: { request: PlotRequest }) {
                         {step.complete ? <Check className="size-4" aria-hidden="true" /> : <CircleDot className="size-3.5" aria-hidden="true" />}
                     </span>
                     <span className="block pt-1 sm:pt-0">
-                        <span className="block text-sm font-semibold text-foreground">{step.label}</span>
+                        <span className="block text-sm font-bold text-foreground">{step.label}</span>
                         <span className="mt-0.5 block text-xs text-muted-foreground">{step.detail}</span>
                     </span>
                 </li>
@@ -137,7 +137,7 @@ function EmptyRequests() {
                     <Sprout className="size-6" aria-hidden="true" />
                 </span>
                 <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Start growing</p>
-                <h2 id="empty-requests-title" className="mt-1 text-2xl font-semibold tracking-[-0.025em] text-foreground">No plot requests yet</h2>
+                <h2 id="empty-requests-title" className="mt-1 text-2xl font-[750] tracking-[-0.025em] text-foreground">No plot requests yet</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     Browse available garden plots, choose a space that fits your plans, and tell the garden team what you’d like to grow.
                 </p>
@@ -154,14 +154,14 @@ function RequestHistory({ requests, currentId }: { requests: PlotRequest[]; curr
         <section aria-labelledby="request-history-title">
             <div className="border-b border-border pb-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">All activity</p>
-                <h2 id="request-history-title" className="mt-1 text-xl font-semibold tracking-[-0.025em] text-foreground">Request history</h2>
+                <h2 id="request-history-title" className="mt-1 text-xl font-[750] tracking-[-0.025em] text-foreground">Request history</h2>
             </div>
             <ul className="divide-y divide-border border-b border-border">
                 {requests.map((request) => (
                     <li key={request.id} className="grid gap-4 px-1 py-5 transition-colors hover:bg-primary/[0.025] sm:grid-cols-[minmax(0,1fr)_160px_auto] sm:items-center sm:px-2">
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-semibold text-foreground">{request.plot ? `Plot ${request.plot.plot_code}` : 'Former garden plot'}</p>
+                                <p className="font-bold text-foreground">{request.plot ? `Plot ${request.plot.plot_code}` : 'Former garden plot'}</p>
                                 {request.id === currentId && <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Current</span>}
                             </div>
                             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -209,7 +209,7 @@ export function PlotRequestsWorkspace({
                                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">Current request</p>
                                         <RequestBadge status={currentRequest.status} />
                                     </div>
-                                    <h2 id="current-request-title" className="mt-5 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
+                                    <h2 id="current-request-title" className="mt-5 text-3xl font-[760] tracking-[-0.035em] sm:text-4xl">
                                         {currentRequest.plot ? `Plot ${currentRequest.plot.plot_code}` : 'Former garden plot'}
                                     </h2>
                                     <p className="mt-3 max-w-xl text-sm leading-6 text-primary-foreground/70">
@@ -240,7 +240,7 @@ export function PlotRequestsWorkspace({
                                 <section aria-labelledby="review-progress-title">
                                     <div className="border-b border-border pb-4">
                                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Application progress</p>
-                                        <h2 id="review-progress-title" className="mt-1 text-xl font-semibold tracking-[-0.025em] text-foreground">Review timeline</h2>
+                                        <h2 id="review-progress-title" className="mt-1 text-xl font-[750] tracking-[-0.025em] text-foreground">Review timeline</h2>
                                     </div>
                                     <div className="py-6"><RequestProgress request={currentRequest} /></div>
                                 </section>
@@ -249,7 +249,7 @@ export function PlotRequestsWorkspace({
                                     <div className="flex gap-4">
                                         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/[0.08] text-primary"><ClipboardCheck className="size-4" aria-hidden="true" /></span>
                                         <div>
-                                            <h2 id="request-note-title" className="font-semibold text-foreground">Your growing plan</h2>
+                                            <h2 id="request-note-title" className="font-bold text-foreground">Your growing plan</h2>
                                             <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                                                 {currentRequest.notes || 'No growing notes were included with this request.'}
                                             </p>
@@ -260,7 +260,7 @@ export function PlotRequestsWorkspace({
 
                             <aside className="border-l-2 border-primary/20 pl-5" aria-labelledby="what-happens-next-title">
                                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Good to know</p>
-                                <h2 id="what-happens-next-title" className="mt-1 text-lg font-semibold tracking-[-0.02em] text-foreground">What happens next</h2>
+                                <h2 id="what-happens-next-title" className="mt-1 text-lg font-[750] tracking-[-0.02em] text-foreground">What happens next</h2>
                                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
                                     Staff review plot availability and your growing plan. A decision will appear here once the review is complete.
                                 </p>
