@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+    --background: #f4ede6;
+    --foreground: #404f1d;
+    --card: #f8f3ed;
+    --card-foreground: #404f1d;
+    --popover: #fbf7f2;
+    --popover-foreground: #404f1d;
+    --primary: #404f1d;
+    --primary-foreground: #f4ede6;
+    --secondary: #ebe5da;
+    --secondary-foreground: #404f1d;
+    --muted: #eee8df;
+    --muted-foreground: #6f7559;
+    --accent: #d9d5c2;
+    --accent-foreground: #404f1d;
+    --destructive: #a33f32;
+    --border: #d5cfc2;
+    --input: #d5cfc2;
+    --ring: #636f3d;
+    --radius: 1rem;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --font-sans: "Aeonik", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@layer base {
+    * { @apply border-border outline-ring/50; }
+    html { @apply bg-primary; }
+    body { @apply min-h-screen bg-primary text-foreground antialiased; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+}
+
+.app-scrollbar {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(64 79 29 / 22%) transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar { width: 10px; }
+.app-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.app-scrollbar::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: rgb(64 79 29 / 22%);
+    background-clip: padding-box;
+}
+
+@keyframes rise-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-rise-in {
+    animation: rise-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

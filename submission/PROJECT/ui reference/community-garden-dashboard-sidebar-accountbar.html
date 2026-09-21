@@ -1,0 +1,2457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Community Garden — Dashboard Preview</title>
+
+  <!-- Standalone preview of Figma node 1:2.
+       Icons use the same Lucide glyphs as the project implementation. -->
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root {
+      --background: #f4ede6;
+      --foreground: #404f1d;
+      --card: #f8f3ed;
+      --primary: #404f1d;
+      --primary-foreground: #f4ede6;
+      --secondary: #ebe5da;
+      --muted-foreground: #6f7559;
+      --border: #d5cfc2;
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--primary); }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--primary);
+      color: var(--foreground);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 50;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .topbar .brand-icon {
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.8;
+    }
+
+    .app-surface {
+      position: fixed;
+      inset: 52px 0 0 0;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 24px 24px 0 0;
+      background: var(--background);
+      box-shadow: 0 -1px 0 rgba(255,255,255,.04);
+    }
+
+    .sidebar {
+      position: absolute;
+      z-index: 40;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 241px;
+      border-right: 1px solid rgba(213, 207, 194, .60);
+      background: var(--background);
+    }
+
+    .sidebar-inner {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .account-row {
+      height: 56px;
+      flex: 0 0 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .account-button {
+      width: 172px;
+      height: 36px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+
+    .account-button:hover,
+    .round-button:hover,
+    .nav-item:not(.active):hover {
+      background: rgba(64, 79, 29, .08);
+    }
+
+    .avatar {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
+      border-radius: 999px;
+      background: rgba(64, 79, 29, .20);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .account-name {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      text-align: left;
+    }
+
+    .account-button svg {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+    }
+
+    .round-button {
+      width: 36px;
+      height: 36px;
+      flex: 0 0 36px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+
+    .round-button svg { width: 19px; height: 19px; }
+
+    .nav {
+      min-height: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0 12px 4px;
+    }
+
+    .nav-primary { padding: 8px 0; }
+    .nav-tools { padding: 8px 0; }
+
+    .nav-item {
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      color: var(--muted-foreground);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .nav-item + .nav-item { margin-top: 1px; }
+    .nav-item svg { width: 20px; height: 20px; flex: 0 0 20px; }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .nav-item.placeholder {
+      color: rgba(111, 117, 89, .72);
+      cursor: default;
+    }
+
+    .tools-label {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 600;
+      color: rgba(111, 117, 89, .72);
+    }
+
+    .tool-item {
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+      color: rgba(111, 117, 89, .72);
+      cursor: default;
+    }
+
+    .tool-item svg { width: 20px; height: 20px; }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      height: 40px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 0 8px;
+    }
+
+    .main {
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      padding: 0 40px 0 296px;
+      background: var(--background);
+    }
+
+
+    .main::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .main::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .main::-webkit-scrollbar-thumb {
+      border: 3px solid transparent;
+      border-radius: 999px;
+      background: rgba(64, 79, 29, .22);
+      background-clip: padding-box;
+    }
+
+    .main {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(64, 79, 29, .22) transparent;
+    }
+
+    .page-header,
+    .content {
+      width: 100%;
+      max-width: 1151px;
+    }
+
+    .page-header {
+      position: relative;
+      min-height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px 0;
+      border-bottom: 0;
+      background: var(--background);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .page-header-copy {
+      min-width: 0;
+      flex: 1 1 auto;
+      padding-right: 16px;
+    }
+
+    .page-header h1 {
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 600;
+      letter-spacing: -.35px;
+      white-space: nowrap;
+    }
+
+    .page-header-description {
+      margin-top: 0;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--muted-foreground);
+    }
+
+    .page-header-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-search {
+      width: 208px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 11px;
+      border: 1px solid rgba(64, 79, 29, .12);
+      border-radius: 10px;
+      background: rgba(248, 243, 237, .72);
+      box-shadow: 0 1px 2px rgba(64, 79, 29, .04), inset 0 1px 0 rgba(255, 255, 255, .28);
+      color: var(--muted-foreground);
+    }
+
+    .header-search svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+    }
+
+    .header-search input {
+      min-width: 0;
+      width: 100%;
+      height: 30px;
+      border: 0;
+      outline: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--foreground);
+      font: inherit;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .header-search input::placeholder {
+      color: rgba(111, 117, 89, .72);
+      opacity: 1;
+    }
+
+    .header-new-button {
+      height: 32px;
+      border: 1px solid var(--primary);
+      border-radius: 10px;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 11px;
+      box-shadow: 0 1px 1px rgba(64, 79, 29, .14), inset 0 1px 0 rgba(255, 255, 255, .08);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform .15s ease, background .15s ease;
+    }
+
+    .header-new-button:hover {
+      transform: translateY(-1px);
+      background: #4a5b23;
+    }
+
+    .header-new-button svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .content { padding: 40px 0; }
+
+    .section-title {
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 600;
+      letter-spacing: -.5px;
+    }
+
+    .garden-card {
+      width: 280px;
+      height: 356px;
+      margin-top: 24px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--secondary);
+    }
+
+    .garden-visual {
+      height: 276px;
+      padding: 32px;
+      display: grid;
+      place-items: center;
+      background: rgba(64, 79, 29, .06);
+    }
+
+    .garden-emblem {
+      width: 164px;
+      height: 164px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .garden-emblem svg {
+      width: 80px;
+      height: 80px;
+      stroke-width: 1.2;
+    }
+
+    .garden-card-footer {
+      height: 78px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      border-top: 1px solid rgba(213, 207, 194, .40);
+    }
+
+    .garden-meta {
+      width: 124px;
+      min-width: 0;
+    }
+
+    .garden-name {
+      height: 28px;
+      overflow: hidden;
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 600;
+      letter-spacing: -.5px;
+      white-space: nowrap;
+    }
+
+    .garden-access {
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--muted-foreground);
+      text-transform: capitalize;
+    }
+
+    .garden-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .icon-circle,
+    .outline-pill {
+      height: 40px;
+      border: 1px solid var(--border);
+      background: rgba(244, 237, 230, .60);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .icon-circle { width: 40px; }
+    .icon-circle svg { width: 18px; height: 18px; }
+
+    .outline-pill {
+      padding: 0 12px;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+    }
+
+    .overview {
+      padding-top: 32px;
+    }
+
+    .overview-grid {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .overview-card {
+      position: relative;
+      height: 340px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--card);
+      padding: 20px;
+    }
+
+    .card-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 24px;
+    }
+
+    .card-topline h3 {
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 600;
+    }
+
+    .card-topline span {
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--muted-foreground);
+    }
+
+    .readiness-body {
+      height: 226px;
+      padding-top: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .readiness-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .readiness-icon svg { width: 20px; height: 20px; }
+
+    .readiness-copy {
+      max-width: 448px;
+      font-size: 24px;
+      line-height: 28px;
+      font-weight: 600;
+      letter-spacing: -.6px;
+    }
+
+    .ready-button {
+      position: absolute;
+      left: 20px;
+      bottom: 20px;
+      height: 32px;
+      border: 1px solid rgba(64, 79, 29, .35);
+      background: transparent;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      color: var(--primary);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .check-badge {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .check-badge svg { width: 10px; height: 10px; stroke-width: 3; }
+
+    .activity-preview {
+      position: relative;
+      height: 178px;
+      overflow: hidden;
+      border: 1px solid rgba(213, 207, 194, .40);
+      border-radius: 16px;
+      background: var(--secondary);
+    }
+
+    .mock-window {
+      position: absolute;
+      left: 50%;
+      top: 16px;
+      width: 301px;
+      height: 256px;
+      transform: translateX(-50%);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      background: var(--background);
+      box-shadow: 0 8px 26px rgba(64, 79, 29, .08);
+    }
+
+    .mock-titlebar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(213, 207, 194, .40);
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(64,79,29,.35); }
+    .dot:nth-child(2) { background: rgba(64,79,29,.20); }
+    .dot:nth-child(3) { background: rgba(64,79,29,.10); }
+
+    .mock-content { padding: 16px; }
+    .skeleton {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(64, 79, 29, .10);
+    }
+
+    .skeleton.strong { width: 178px; background: rgba(64, 79, 29, .20); }
+    .skeleton.full { width: 267px; margin-top: 12px; }
+    .skeleton.short { width: 214px; margin-top: 12px; }
+
+    .bars {
+      height: 102px;
+      margin-top: 8px;
+      padding-top: 20px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .bar {
+      flex: 1;
+      border-radius: 4px 4px 0 0;
+      background: rgba(64, 79, 29, .25);
+    }
+
+    .activity-copy {
+      padding-top: 12px;
+      text-align: center;
+    }
+
+    .activity-copy h3 {
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 600;
+      letter-spacing: -.5px;
+    }
+
+    .activity-copy p {
+      padding-top: 2px;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--muted-foreground);
+    }
+
+    .chips {
+      height: 46px;
+      padding-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .chip {
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px dashed rgba(64, 79, 29, .35);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .chip svg { width: 14px; height: 14px; }
+
+
+    .dashboard-stack {
+      display: grid;
+      gap: 32px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 700;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+    }
+
+    .section-heading-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .section-heading-copy p {
+      margin-top: 4px;
+      max-width: 620px;
+      font-size: 14px;
+      line-height: 21px;
+      color: var(--muted-foreground);
+    }
+
+    .text-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 0;
+      background: transparent;
+      color: var(--foreground);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .text-link svg { width: 15px; height: 15px; }
+
+    .hero-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--card);
+    }
+
+    .hero-main {
+      min-height: 252px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hero-main h2 {
+      max-width: 650px;
+      margin-top: 10px;
+      font-size: clamp(27px, 3vw, 36px);
+      line-height: 1.08;
+      letter-spacing: -.04em;
+      font-weight: 650;
+    }
+
+    .hero-main p {
+      max-width: 610px;
+      margin-top: 14px;
+      font-size: 15px;
+      line-height: 23px;
+      color: var(--muted-foreground);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .solid-button,
+    .soft-button {
+      height: 40px;
+      border-radius: 999px;
+      padding: 0 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .solid-button {
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .soft-button {
+      border: 1px solid var(--border);
+      background: var(--background);
+      color: var(--foreground);
+    }
+
+    .solid-button svg,
+    .soft-button svg { width: 16px; height: 16px; }
+
+    .hero-side {
+      min-height: 252px;
+      padding: 24px;
+      border-left: 1px solid rgba(213, 207, 194, .65);
+      background: var(--secondary);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .attention-count {
+      margin-top: 8px;
+      font-size: 48px;
+      line-height: 1;
+      font-weight: 650;
+      letter-spacing: -.055em;
+    }
+
+    .attention-label {
+      margin-top: 7px;
+      font-size: 14px;
+      line-height: 21px;
+      color: var(--muted-foreground);
+    }
+
+    .attention-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .attention-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--foreground);
+    }
+
+    .attention-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--primary);
+      flex: 0 0 8px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .stat-card {
+      min-height: 142px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--card);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stat-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .stat-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: rgba(64, 79, 29, .09);
+      display: grid;
+      place-items: center;
+    }
+
+    .stat-icon svg { width: 17px; height: 17px; }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      border: 1px solid rgba(64,79,29,.18);
+      border-radius: 999px;
+      padding: 0 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted-foreground);
+      white-space: nowrap;
+    }
+
+    .stat-value {
+      margin-top: 18px;
+      font-size: 30px;
+      line-height: 32px;
+      font-weight: 650;
+      letter-spacing: -.04em;
+    }
+
+    .stat-label {
+      margin-top: 2px;
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--muted-foreground);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(320px, .82fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--card);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 72px;
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid rgba(213,207,194,.55);
+    }
+
+    .panel-head h3 {
+      font-size: 17px;
+      line-height: 23px;
+      font-weight: 650;
+      letter-spacing: -.02em;
+    }
+
+    .panel-head p {
+      margin-top: 3px;
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--muted-foreground);
+    }
+
+    .request-list {
+      display: grid;
+    }
+
+    .request-row {
+      min-height: 76px;
+      padding: 15px 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      border-bottom: 1px solid rgba(213,207,194,.42);
+    }
+
+    .request-row:last-child { border-bottom: 0; }
+
+    .request-person {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .request-avatar {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--secondary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .request-name {
+      font-size: 14px;
+      line-height: 19px;
+      font-weight: 650;
+    }
+
+    .request-meta {
+      margin-top: 2px;
+      font-size: 12px;
+      line-height: 17px;
+      color: var(--muted-foreground);
+    }
+
+    .request-action {
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--background);
+      padding: 0 11px;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .schedule-list {
+      padding: 6px 20px 10px;
+    }
+
+    .schedule-row {
+      min-height: 72px;
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 13px;
+      align-items: center;
+      border-bottom: 1px solid rgba(213,207,194,.42);
+    }
+
+    .schedule-row:last-child { border-bottom: 0; }
+
+    .date-tile {
+      width: 46px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--secondary);
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .date-tile span:first-child {
+      display: block;
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+    }
+
+    .date-tile span:last-child {
+      display: block;
+      margin-top: 1px;
+      font-size: 18px;
+      line-height: 19px;
+      font-weight: 700;
+    }
+
+    .schedule-title {
+      font-size: 14px;
+      line-height: 19px;
+      font-weight: 650;
+    }
+
+    .schedule-meta {
+      margin-top: 2px;
+      font-size: 12px;
+      line-height: 17px;
+      color: var(--muted-foreground);
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+      gap: 24px;
+    }
+
+    .plot-board {
+      padding: 20px;
+    }
+
+    .plot-summary {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .plot-summary strong {
+      font-size: 28px;
+      line-height: 30px;
+      letter-spacing: -.04em;
+    }
+
+    .plot-summary span {
+      font-size: 13px;
+      color: var(--muted-foreground);
+    }
+
+    .plot-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .plot-cell {
+      min-height: 84px;
+      border: 1px solid rgba(64,79,29,.16);
+      border-radius: 16px;
+      padding: 12px;
+      background: var(--background);
+    }
+
+    .plot-cell strong {
+      display: block;
+      font-size: 13px;
+      line-height: 18px;
+    }
+
+    .plot-cell span {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 20px;
+      font-size: 11px;
+      line-height: 15px;
+      color: var(--muted-foreground);
+    }
+
+    .plot-cell.available { background: rgba(64, 79, 29, .06); }
+    .plot-cell.occupied { background: var(--secondary); }
+    .plot-cell.maintenance { background: rgba(163, 63, 50, .05); }
+
+    .update-card {
+      height: 100%;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .update-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .update-icon svg { width: 19px; height: 19px; }
+
+    .update-card h3 {
+      margin-top: 20px;
+      font-size: 22px;
+      line-height: 26px;
+      letter-spacing: -.035em;
+      font-weight: 650;
+    }
+
+    .update-card p {
+      margin-top: 9px;
+      font-size: 14px;
+      line-height: 21px;
+      color: var(--muted-foreground);
+    }
+
+    .update-foot {
+      margin-top: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--muted-foreground);
+    }
+
+    .mobile-menu { display: none; }
+
+    @media (max-width: 1050px) {
+      .sidebar { display: none; }
+      .main { padding-left: 24px; padding-right: 24px; }
+      .topbar { justify-content: space-between; }
+      .mobile-menu {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        margin-left: auto;
+        border: 0;
+        background: transparent;
+        color: var(--primary-foreground);
+      }
+      .overview-grid { grid-template-columns: 1fr; }
+      .overview-card { max-width: 563.5px; }
+      .hero-panel,
+      .main-grid,
+      .bottom-grid { grid-template-columns: 1fr; }
+      .hero-side { border-left: 0; border-top: 1px solid rgba(213, 207, 194, .65); }
+      .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .plot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 650px) {
+      .main { padding: 0 16px; }
+      .page-header {
+        min-height: 0;
+        align-items: stretch;
+        flex-direction: column;
+        justify-content: center;
+        gap: 14px;
+        padding: 20px 0;
+      }
+      .page-header-copy { padding-right: 0; }
+      .page-header h1 { white-space: normal; }
+      .page-header-description { max-width: 34rem; }
+      .page-header-actions { width: 100%; }
+      .header-search { width: auto; flex: 1 1 auto; }
+      .header-new-button { flex: 0 0 auto; }
+      .content { padding-top: 28px; }
+      .overview-card { height: auto; min-height: 340px; }
+      .mock-window { width: min(301px, calc(100% - 40px)); }
+      .content { padding-bottom: 28px; }
+      .dashboard-stack { gap: 24px; }
+      .hero-main, .hero-side { padding: 22px; }
+      .stat-grid { grid-template-columns: 1fr; }
+      .section-heading-row { align-items: flex-start; flex-direction: column; }
+      .plot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .panel-head { align-items: flex-start; }
+      .request-row { grid-template-columns: 1fr; }
+      .request-action { width: max-content; margin-left: 50px; }
+    }
+
+
+    /* Dashboard content adapted from Figma node 1:668:
+       920px content rail, compact summary cards, one primary activity card,
+       an informational banner, 3-column insight grids, and a totals strip. */
+    .garden-admin-dashboard {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    .garden-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: -6px -12px 0;
+      padding: 6px 12px;
+      overflow: hidden;
+    }
+
+    .garden-card-surface {
+      background: var(--card);
+      border-radius: 24px;
+      box-shadow:
+        0 0 0 1px rgba(64, 79, 29, .055),
+        0 2px 4px rgba(64, 79, 29, .06);
+    }
+
+    .garden-summary-card {
+      height: 96px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .garden-summary-icon {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      color: var(--foreground);
+    }
+
+    .garden-summary-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 1.75;
+    }
+
+    .garden-summary-value {
+      font-size: 20px;
+      line-height: 24px;
+      font-weight: 650;
+      letter-spacing: -.2px;
+    }
+
+    .garden-summary-label {
+      margin-top: 1px;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: auto;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .garden-activity-card {
+      grid-column: 1 / -1;
+      min-height: 420px;
+      padding: 16px;
+    }
+
+    .garden-card-caption {
+      min-height: 36px;
+      padding-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .garden-card-title {
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+      letter-spacing: .01em;
+    }
+
+    .garden-card-subtitle {
+      margin-top: 2px;
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-icon-button {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      color: var(--muted-foreground);
+      cursor: pointer;
+    }
+
+    .garden-icon-button:hover {
+      background: rgba(64, 79, 29, .08);
+      color: var(--foreground);
+    }
+
+    .garden-icon-button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .garden-chart-wrap {
+      position: relative;
+      height: 286px;
+      overflow: hidden;
+    }
+
+    #gardenActivityChart {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .garden-chart-legend {
+      height: 16px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      margin-top: 0;
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .garden-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--primary);
+    }
+
+    .garden-legend-dot.secondary {
+      background: rgba(64, 79, 29, .28);
+    }
+
+    .garden-question-row {
+      height: 40px;
+      padding-top: 10px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .garden-question-pill {
+      height: 30px;
+      border: 1px solid rgba(64, 79, 29, .15);
+      border-radius: 999px;
+      background: rgba(244, 237, 230, .6);
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--foreground);
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 550;
+      cursor: pointer;
+    }
+
+    .garden-question-pill svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .garden-member-banner {
+      grid-column: 1 / -1;
+      position: relative;
+      height: 84px;
+      overflow: hidden;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 2px solid rgba(64, 79, 29, .06);
+    }
+
+    .garden-member-banner-copy h2 {
+      font-size: 20px;
+      line-height: 24px;
+      font-weight: 650;
+      letter-spacing: -.25px;
+    }
+
+    .garden-member-banner-copy p {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-member-banner-copy p svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .garden-banner-action {
+      position: relative;
+      z-index: 2;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--background);
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--foreground);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .garden-banner-action svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .garden-banner-decoration {
+      position: absolute;
+      right: -18px;
+      top: -30px;
+      width: 130px;
+      height: 130px;
+      border-radius: 999px;
+      border: 1px solid rgba(64, 79, 29, .10);
+    }
+
+    .garden-banner-decoration::after {
+      content: "";
+      position: absolute;
+      inset: 23px;
+      border-radius: inherit;
+      border: 1px solid rgba(64, 79, 29, .10);
+    }
+
+    .garden-insight-card {
+      height: 214px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .garden-insight-card.tall {
+      height: 252px;
+    }
+
+    .garden-insight-head {
+      min-height: 36px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .garden-insight-head h3 {
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 600;
+    }
+
+    .garden-sample-note {
+      font-size: 11px;
+      line-height: 16px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-small-status {
+      height: 24px;
+      padding: 0 8px;
+      border: 1px solid rgba(64, 79, 29, .12);
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      white-space: nowrap;
+    }
+
+    .garden-mini-bars {
+      height: 104px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 12px 4px 6px;
+    }
+
+    .garden-mini-bar {
+      flex: 1;
+      min-width: 10px;
+      border-radius: 6px 6px 2px 2px;
+      background: rgba(64, 79, 29, .15);
+    }
+
+    .garden-mini-bar.strong {
+      background: var(--primary);
+    }
+
+    .garden-card-foot {
+      margin-top: auto;
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-availability-visual {
+      height: 104px;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    .garden-ring {
+      width: 94px;
+      height: 94px;
+      border-radius: 999px;
+      background:
+        conic-gradient(
+          var(--primary) 0 40%,
+          rgba(64, 79, 29, .35) 40% 60%,
+          rgba(64, 79, 29, .17) 60% 80%,
+          rgba(163, 63, 50, .18) 80% 100%
+        );
+      position: relative;
+    }
+
+    .garden-ring::after {
+      content: "";
+      position: absolute;
+      inset: 13px;
+      border-radius: inherit;
+      background: var(--card);
+    }
+
+    .garden-ring-label {
+      position: absolute;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .garden-ring-label strong {
+      display: block;
+      font-size: 22px;
+      line-height: 24px;
+      font-weight: 650;
+    }
+
+    .garden-ring-label span {
+      display: block;
+      margin-top: 2px;
+      font-size: 10px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-source-list {
+      padding-top: 8px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .garden-source-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .garden-source-name {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .garden-source-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--primary);
+      flex: 0 0 auto;
+    }
+
+    .garden-source-dot.dim {
+      background: rgba(64, 79, 29, .25);
+    }
+
+    .garden-source-count {
+      color: var(--muted-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .garden-request-list {
+      margin-top: 8px;
+      display: grid;
+    }
+
+    .garden-request-item {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(213, 207, 194, .45);
+    }
+
+    .garden-request-item:last-child {
+      border-bottom: 0;
+    }
+
+    .garden-request-avatar {
+      width: 24px;
+      height: 24px;
+      flex: 0 0 auto;
+      border-radius: 7px;
+      background: var(--secondary);
+      display: grid;
+      place-items: center;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .garden-request-text {
+      min-width: 0;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 550;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .garden-insight-copy {
+      margin-top: 9px;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--foreground);
+    }
+
+    .garden-insight-copy strong {
+      font-weight: 650;
+    }
+
+    .garden-big-number {
+      margin-top: 12px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .garden-big-number strong {
+      font-size: 24px;
+      line-height: 28px;
+      font-weight: 650;
+      letter-spacing: -.3px;
+    }
+
+    .garden-big-number span {
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-card-bottom-pill {
+      margin-top: 14px;
+    }
+
+    .garden-totals {
+      margin-top: 0;
+      padding-top: 16px;
+    }
+
+    .garden-totals h2 {
+      font-size: 20px;
+      line-height: 24px;
+      font-weight: 650;
+      letter-spacing: -.25px;
+    }
+
+    .garden-totals-panel {
+      height: 112px;
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      padding: 10px;
+    }
+
+    .garden-total-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .garden-total-item + .garden-total-item::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    .garden-total-item svg {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 8px;
+      stroke-width: 1.75;
+    }
+
+    .garden-total-item strong {
+      font-size: 20px;
+      line-height: 24px;
+      font-weight: 650;
+    }
+
+    .garden-total-item span {
+      margin-top: 1px;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-feedback {
+      height: 68px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+    }
+
+    .garden-feedback button {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      text-align: left;
+      color: var(--foreground);
+      cursor: pointer;
+    }
+
+    .garden-feedback small {
+      display: block;
+      font-size: 12px;
+      line-height: 17px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-feedback strong {
+      display: block;
+      font-size: 14px;
+      line-height: 21px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .garden-admin-dashboard {
+        width: 100%;
+      }
+
+      .garden-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .garden-activity-card,
+      .garden-member-banner {
+        grid-column: 1 / -1;
+      }
+
+      .garden-insight-card {
+        height: auto;
+        min-height: 230px;
+      }
+
+      .garden-insight-card.tall {
+        height: auto;
+        min-height: 276px;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .garden-admin-dashboard {
+        padding-top: 18px;
+      }
+
+      .garden-summary-grid,
+      .garden-dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .garden-summary-grid {
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      .garden-summary-card {
+        height: 96px;
+      }
+
+      .garden-activity-card,
+      .garden-member-banner {
+        grid-column: 1;
+      }
+
+      .garden-member-banner {
+        height: auto;
+        min-height: 104px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .garden-banner-decoration {
+        opacity: .55;
+      }
+
+      .garden-chart-wrap {
+        height: 232px;
+      }
+
+      .garden-totals-panel {
+        height: auto;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 16px;
+      }
+
+      .garden-total-item {
+        min-height: 90px;
+      }
+
+      .garden-total-item:nth-child(3)::before {
+        display: none;
+      }
+    }
+
+
+    .garden-plot-map {
+      height: 286px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      padding: 12px 2px 4px;
+    }
+
+    .garden-plot-tile {
+      position: relative;
+      min-width: 0;
+      border-radius: 18px;
+      border: 1px solid rgba(64, 79, 29, .11);
+      background: var(--background);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .garden-plot-tile::after {
+      content: "";
+      position: absolute;
+      inset: auto -18px -18px auto;
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      border: 1px solid rgba(64, 79, 29, .08);
+    }
+
+    .garden-plot-tile.available {
+      background: rgba(64, 79, 29, .055);
+    }
+
+    .garden-plot-tile.occupied {
+      background: var(--secondary);
+    }
+
+    .garden-plot-tile.reserved {
+      background: rgba(64, 79, 29, .035);
+    }
+
+    .garden-plot-tile.maintenance {
+      background: rgba(163, 63, 50, .055);
+    }
+
+    .garden-plot-code {
+      font-size: 15px;
+      line-height: 20px;
+      font-weight: 650;
+      letter-spacing: -.02em;
+    }
+
+    .garden-plot-location {
+      margin-top: 3px;
+      font-size: 11px;
+      line-height: 15px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-plot-status {
+      position: relative;
+      z-index: 1;
+      width: max-content;
+      max-width: 100%;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      line-height: 16px;
+      font-weight: 600;
+      color: var(--foreground);
+      background: rgba(244, 237, 230, .72);
+      border: 1px solid rgba(64, 79, 29, .10);
+      white-space: nowrap;
+    }
+
+    .garden-activity-card .garden-card-subtitle strong {
+      color: var(--foreground);
+      font-weight: 600;
+    }
+
+    .garden-checklist {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .garden-checklist-item {
+      min-height: 36px;
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 0 2px;
+    }
+
+    .garden-check-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      background: var(--secondary);
+    }
+
+    .garden-check-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .garden-check-main {
+      min-width: 0;
+    }
+
+    .garden-check-title {
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 600;
+    }
+
+    .garden-check-meta {
+      margin-top: 1px;
+      font-size: 11px;
+      line-height: 15px;
+      color: var(--muted-foreground);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .garden-check-value {
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 650;
+      color: var(--muted-foreground);
+    }
+
+    .garden-next-event {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--secondary);
+    }
+
+    .garden-event-date {
+      font-size: 11px;
+      line-height: 15px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+    }
+
+    .garden-event-title {
+      margin-top: 4px;
+      font-size: 15px;
+      line-height: 20px;
+      font-weight: 650;
+    }
+
+    .garden-event-meta {
+      margin-top: 3px;
+      font-size: 12px;
+      line-height: 17px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-update-preview {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(64,79,29,.08);
+      background: var(--background);
+    }
+
+    .garden-update-preview strong {
+      display: block;
+      font-size: 13px;
+      line-height: 18px;
+    }
+
+    .garden-update-preview p {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 17px;
+      color: var(--muted-foreground);
+    }
+
+    .garden-access-breakdown {
+      margin-top: 10px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .garden-access-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .garden-access-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .garden-access-label svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    @media (max-width: 650px) {
+      .garden-plot-map {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        height: auto;
+      }
+
+      .garden-plot-tile {
+        min-height: 118px;
+      }
+    }
+
+
+    /* Sidebar adapted from Figma node 3:524. The app shell, rounded surface,
+       header, and main scroll behavior remain unchanged. */
+    .figma-sidebar {
+      width: 256px;
+      border-right: 1px solid rgba(213, 207, 194, .58);
+      background: var(--background);
+    }
+
+    .figma-sidebar-inner {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .figma-sidebar-top {
+      width: 256px;
+      min-height: 52px;
+      flex: 0 0 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+    }
+
+    .figma-sidebar-account {
+      min-width: 0;
+      max-width: 188px;
+      height: 36px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      color: var(--foreground);
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+
+    .figma-sidebar-account:hover,
+    .figma-sidebar-notification:hover,
+    .figma-nav-item:not(.active):hover {
+      background: rgba(64, 79, 29, .07);
+    }
+
+    .figma-profile-avatar {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(64, 79, 29, .14);
+      color: var(--foreground);
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .figma-sidebar-account-copy {
+      min-width: 0;
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .figma-sidebar-account-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted-foreground);
+      font-size: 14px;
+      line-height: 18px;
+      font-weight: 500;
+      letter-spacing: .01em;
+      text-align: left;
+    }
+
+    .figma-sidebar-account-copy svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      stroke-width: 1.8;
+      color: var(--muted-foreground);
+    }
+
+    .figma-sidebar-notification {
+      width: 36px;
+      height: 36px;
+      flex: 0 0 36px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      color: var(--foreground);
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+
+    .figma-sidebar-notification svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.8;
+    }
+
+    .figma-sidebar-nav {
+      min-height: 0;
+      flex: 1 1 auto;
+      width: 256px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+      padding: 0 8px;
+    }
+
+    .figma-nav-list {
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px 4px;
+    }
+
+    .figma-nav-item {
+      width: 232px;
+      height: 32px;
+      flex: 0 0 32px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      color: var(--muted-foreground);
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .figma-nav-item svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      stroke-width: 1.9;
+    }
+
+    .figma-nav-item span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .figma-nav-item.active {
+      background: rgba(64, 79, 29, .075);
+      color: var(--foreground);
+      font-weight: 600;
+    }
+
+    .figma-sidebar-spacer {
+      min-height: 8px;
+      flex: 1 1 auto;
+    }
+
+    .figma-nav-list-bottom {
+      flex: 0 0 auto;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
+    .figma-nav-button {
+      font-family: inherit;
+    }
+
+    .figma-sidebar-footer {
+      width: 240px;
+      min-height: 40px;
+      flex: 0 0 40px;
+      margin: 0;
+      padding: 4px 24px 24px;
+      color: var(--muted-foreground);
+      font-size: 8px;
+      line-height: 12px;
+      opacity: .58;
+      white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="topbar">
+    <i class="brand-icon" data-lucide="sprout" aria-label="Community Garden"></i>
+    <button class="mobile-menu" aria-label="Open navigation">
+      <i data-lucide="menu"></i>
+    </button>
+  </header>
+
+  <div class="app-surface">
+  <!-- Sidebar — adapted from Figma node 3:524 -->
+  <aside class="sidebar figma-sidebar">
+    <div class="sidebar-inner figma-sidebar-inner">
+      <div class="figma-sidebar-top">
+        <button class="figma-sidebar-account" type="button" aria-label="Open account menu" title="Garden Administrator">
+          <span class="figma-profile-avatar" aria-hidden="true">G</span>
+          <span class="figma-sidebar-account-copy">
+            <span class="figma-sidebar-account-name">Garden Administrator</span>
+            <i data-lucide="chevron-down" aria-hidden="true"></i>
+          </span>
+        </button>
+        <button class="figma-sidebar-notification" type="button" aria-label="Notifications" title="Notifications">
+          <i data-lucide="bell" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <nav class="figma-sidebar-nav" aria-label="Primary navigation">
+        <div class="figma-nav-list">
+          <a class="figma-nav-item active" href="#">
+            <i data-lucide="panels-top-left"></i>
+            <span>Dashboard</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="map"></i>
+            <span>Garden plots</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="clipboard-list"></i>
+            <span>Plot requests</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="sprout"></i>
+            <span>Assignments</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="calendar-days"></i>
+            <span>Garden calendar</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="megaphone"></i>
+            <span>Community updates</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="file-chart-column"></i>
+            <span>Reports</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="users-round"></i>
+            <span>Members</span>
+          </a>
+        </div>
+
+        <div class="figma-sidebar-spacer"></div>
+
+        <div class="figma-nav-list figma-nav-list-bottom">
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="circle-help"></i>
+            <span>Help center</span>
+          </a>
+          <a class="figma-nav-item" href="#">
+            <i data-lucide="settings"></i>
+            <span>Settings</span>
+          </a>
+          <button class="figma-nav-item figma-nav-button" type="button">
+            <i data-lucide="log-out"></i>
+            <span>Log out</span>
+          </button>
+        </div>
+
+        <p class="figma-sidebar-footer">© 2026 Community Garden</p>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header-copy">
+        <h1>Garden dashboard</h1>
+        <p class="page-header-description">Manage garden activity, plots, and member work from one place.</p>
+      </div>
+      <div class="page-header-actions" aria-label="Dashboard actions">
+        <label class="header-search">
+          <i data-lucide="search" aria-hidden="true"></i>
+          <input type="search" placeholder="Search" aria-label="Search dashboard" />
+        </label>
+        <button class="header-new-button" type="button">
+          <i data-lucide="plus" aria-hidden="true"></i>
+          <span>New</span>
+        </button>
+      </div>
+    </div>
+
+
+
+
+  </main>
+  </div>
+
+  <script>
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+
+  </script>
+</body>
+</html>
