@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\GardenPlotStatus;
+use App\Enums\PlotRequestStatus;
 use App\Enums\UserRole;
+use App\Models\GardenPlot;
+use App\Models\PlotRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -55,6 +59,39 @@ class WorkspaceNavigationTest extends TestCase
         $this->actingAs($member)
             ->get('/assignments')
             ->assertInertia(fn ($page) => $page->component('assignments'));
+    }
+
+    public function test_member_plot_requests_page_receives_only_their_request_details(): void
+    {
+        $member = User::factory()->create(['role' => UserRole::Member]);
+        $otherMember = User::factory()->create(['role' => UserRole::Member]);
+        $plot = GardenPlot::create([
+            'plot_code' => 'A-01',
+            'location' => 'North Garden',
+            'size' => 12,
+            'status' => GardenPlotStatus::Available,
+        ]);
+
+        PlotRequest::create([
+            'user_id' => $member->id,
+            'garden_plot_id' => $plot->id,
+            'status' => PlotRequestStatus::Pending,
+            'notes' => 'Vegetables for our household and neighbors.',
+        ]);
+        PlotRequest::create([
+            'user_id' => $otherMember->id,
+            'garden_plot_id' => $plot->id,
+            'status' => PlotRequestStatus::Rejected,
+            'notes' => 'This request must not appear for the signed-in member.',
+        ]);
+
+        $this->actingAs($member)
+            ->get('/plot-requests')
+            ->assertInertia(fn ($page) => $page
+                ->has('plotRequests', 1)
+                ->where('plotRequests.0.status', 'pending')
+                ->where('plotRequests.0.plot.plot_code', 'A-01')
+                ->where('plotRequests.0.plot.location', 'North Garden'));
     }
 
     public function test_workspace_pages_require_authentication(): void

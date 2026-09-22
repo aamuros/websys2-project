@@ -52,7 +52,7 @@ const utilityItems = [
 const navItemClass = (active: boolean) => cn(
     'flex h-8 items-center gap-2 rounded-[10px] px-2 text-sm font-medium transition-[background-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
     active
-        ? 'bg-primary/[0.075] font-semibold text-foreground'
+        ? 'bg-primary/[0.075] font-[650] text-foreground'
         : 'text-muted-foreground hover:bg-primary/[0.07] hover:text-foreground active:translate-x-px',
 );
 
@@ -67,7 +67,7 @@ function AccountMenu() {
                     {user.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
-                    <span className="truncate text-sm font-medium tracking-[0.01em] text-muted-foreground">{user.name}</span>
+                    <span className="truncate text-sm font-semibold tracking-[0.01em] text-muted-foreground">{user.name}</span>
                     <ChevronDown className="size-4 shrink-0 stroke-[1.8] text-muted-foreground" />
                 </span>
             </DropdownMenuTrigger>
@@ -144,7 +144,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     <DropdownMenuContent align="end" className="w-80 rounded-xl p-2">
                         <div className="flex items-center justify-between px-2 py-1"><strong className="text-sm">Notifications</strong>{notifications.unreadCount > 0 && <button className="text-xs text-primary underline" onClick={() => router.post('/notifications/read-all')}>Mark all read</button>}</div>
                         <DropdownMenuSeparator />
-                        {notifications.items.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">You’re all caught up.</p>}
+                        {notifications.items.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">You're all caught up.</p>}
                         {notifications.items.map((item) => <DropdownMenuItem key={item.id} onSelect={() => router.post(`/notifications/${item.id}/read`)} className="block rounded-lg p-2">
                             <span className={cn('block text-sm', !item.read && 'font-semibold')}>{item.message}</span><span className="text-xs text-muted-foreground">{item.created_at}</span>
                         </DropdownMenuItem>)}
@@ -187,10 +187,10 @@ export function AppLayout({ title, description, actions, children }: PropsWithCh
                 </aside>
 
                 <main className="app-scrollbar h-full overflow-y-auto overscroll-contain bg-background px-4 sm:px-6 lg:px-10 lg:pl-[296px]">
-                    <div className="mx-auto flex min-h-24 w-full max-w-[1151px] flex-col justify-center gap-3 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:py-6">
+                    <div className="mx-auto flex min-h-[89px] w-full max-w-[1151px] flex-col justify-center gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
                         <div className="min-w-0 flex-1 sm:pr-4">
-                            <h1 className="text-xl font-semibold leading-7 tracking-[-0.0175em] text-foreground">{title}</h1>
-                            <p className="text-sm leading-5 text-muted-foreground">{description}</p>
+                            <h1 className="text-2xl font-[750] leading-[30px] tracking-[-0.01875em] text-foreground">{title}</h1>
+                            <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
                         </div>
                         {actions && <div className="w-full shrink-0 sm:w-auto">{actions}</div>}
                     </div>

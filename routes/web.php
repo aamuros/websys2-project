@@ -13,6 +13,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlotRequestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
 
