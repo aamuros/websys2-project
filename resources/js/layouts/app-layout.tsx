@@ -93,24 +93,24 @@ function NotificationMenu() {
         <DropdownMenu>
             <DropdownMenuTrigger className="relative grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-primary/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" aria-label="Open notifications">
                 <Bell className="size-5 stroke-[1.8]" />
-                <span className="absolute right-2 top-2 size-1.5 rounded-full bg-destructive ring-2 ring-background" aria-hidden="true" />
+                <span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary ring-2 ring-background" aria-hidden="true" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={7} className="w-72 rounded-xl p-1.5">
-                <DropdownMenuLabel className="px-2 py-2">
-                    <span className="block">Notifications</span>
-                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Two garden updates need your attention.</span>
+            <DropdownMenuContent align="end" sideOffset={7} className="w-64 rounded-xl border-border/60 p-1.5 shadow-lg">
+                <DropdownMenuLabel className="px-2 py-1.5">
+                    <span className="block text-sm text-foreground">Notifications</span>
+                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">2 garden updates</span>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="items-start rounded-lg py-2.5">
+                <DropdownMenuSeparator className="bg-border/60" />
+                <DropdownMenuItem asChild className="items-start gap-2 rounded-lg py-2 focus:bg-primary/[0.07]">
                     <Link href="/community-updates">
-                        <Megaphone className="mt-0.5" />
-                        <span><span className="block font-medium">Watering hours changed</span><span className="mt-0.5 block text-xs text-muted-foreground">View the latest community update</span></span>
+                        <Megaphone className="mt-0.5 size-4 shrink-0 text-primary" />
+                        <span><span className="block text-xs font-semibold text-foreground">Watering hours changed</span><span className="mt-0.5 block text-xs text-muted-foreground">View community update</span></span>
                     </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="items-start rounded-lg py-2.5">
+                <DropdownMenuItem asChild className="items-start gap-2 rounded-lg py-2 focus:bg-primary/[0.07]">
                     <Link href="/garden-calendar">
-                        <CalendarDays className="mt-0.5" />
-                        <span><span className="block font-medium">Community workday</span><span className="mt-0.5 block text-xs text-muted-foreground">See the upcoming garden schedule</span></span>
+                        <CalendarDays className="mt-0.5 size-4 shrink-0 text-primary" />
+                        <span><span className="block text-xs font-semibold text-foreground">Community workday</span><span className="mt-0.5 block text-xs text-muted-foreground">View garden calendar</span></span>
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuContent>

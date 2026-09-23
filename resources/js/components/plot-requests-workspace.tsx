@@ -1,6 +1,5 @@
 import { Link } from '@inertiajs/react';
 import {
-    ArrowRight,
     CalendarClock,
     Check,
     CheckCircle2,
@@ -131,19 +130,13 @@ function RequestProgress({ request }: { request: PlotRequest }) {
 
 function EmptyRequests() {
     return (
-        <section className="grid min-h-[430px] place-items-center border-y border-border px-5 py-16 text-center" aria-labelledby="empty-requests-title">
-            <div className="max-w-md">
+        <section className="flex min-h-[calc(100dvh-220px)] items-center justify-center pb-16 sm:min-h-[calc(100dvh-188px)]" aria-labelledby="empty-requests-title">
+            <div className="w-full max-w-sm text-center">
                 <span className="mx-auto grid size-14 place-items-center rounded-full bg-primary/[0.08] text-primary">
                     <Sprout className="size-6" aria-hidden="true" />
                 </span>
-                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Start growing</p>
-                <h2 id="empty-requests-title" className="mt-1 text-2xl font-[750] tracking-[-0.025em] text-foreground">No plot requests yet</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Browse available garden plots, choose a space that fits your plans, and tell the garden team what you’d like to grow.
-                </p>
-                <Button asChild className="mt-6 rounded-xl">
-                    <Link href="/garden-plots">Browse available plots<ArrowRight aria-hidden="true" /></Link>
-                </Button>
+                <h2 id="empty-requests-title" className="mt-5 text-lg font-[750] tracking-[-0.015em] text-foreground">No plot requests yet</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Your plot requests will appear here when you request an available garden plot.</p>
             </div>
         </section>
     );
