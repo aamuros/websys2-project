@@ -6,6 +6,7 @@ use App\Enums\PlotAssignmentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PlotAssignment extends Model
 {
@@ -29,6 +30,11 @@ class PlotAssignment extends Model
     public function gardenPlot(): BelongsTo
     {
         return $this->belongsTo(GardenPlot::class);
+    }
+
+    public function plantings(): HasMany
+    {
+        return $this->hasMany(Planting::class);
     }
 
     protected function casts(): array
