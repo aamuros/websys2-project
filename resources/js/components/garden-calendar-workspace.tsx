@@ -13,57 +13,33 @@ import { cn } from '@/lib/utils';
 type CalendarView = 'calendar' | 'list';
 
 interface GardenEvent {
+    id: number;
     date: string;
     start: string;
     end: string;
+    startMinutes: number;
+    endMinutes: number;
     name: string;
     location: string;
     audience: string;
     type: string;
 }
 
-const SOURCE_WEEK_START = new Date(2026, 8, 13);
-const SOURCE_TODAY = '2026-09-19';
+export interface CalendarEventRecord {
+    id: number;
+    title: string;
+    description: string | null;
+    location: string | null;
+    starts_at: string;
+    ends_at: string;
+}
+
 const TIME_GRID_HEIGHT = 1430;
 
-const gardenEvents: GardenEvent[] = [
-    {
-        date: '2026-09-14',
-        start: '9:00am',
-        end: '10:30am',
-        name: 'Community work day',
-        location: 'Shared garden area',
-        audience: 'All members',
-        type: 'Shared work',
-    },
-    {
-        date: '2026-09-16',
-        start: '2:00pm',
-        end: '3:00pm',
-        name: 'Irrigation maintenance',
-        location: 'North beds',
-        audience: 'Maintenance crew',
-        type: 'Maintenance',
-    },
-    {
-        date: '2026-09-18',
-        start: '4:30pm',
-        end: '5:30pm',
-        name: 'Harvest preparation',
-        location: 'Tool shed',
-        audience: 'Volunteers',
-        type: 'Garden event',
-    },
-    {
-        date: '2026-09-18',
-        start: '6:00pm',
-        end: '7:00pm',
-        name: 'Compost orientation',
-        location: 'Compost station',
-        audience: 'New members',
-        type: 'Orientation',
-    },
-];
+function currentWeekStart() {
+    const today = new Date();
+    return addDays(today, -today.getDay());
+}
 
 const toolbarButtonClass = 'relative inline-flex h-7 items-center justify-center gap-1.5 rounded-[10px] border border-border/90 bg-card px-2.5 text-sm font-medium text-foreground shadow-[0_1px_2px_rgba(64,79,29,0.04)] transition-colors after:pointer-events-none after:absolute after:inset-0 after:rounded-[9px] after:shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:bg-primary/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50';
 
@@ -119,7 +95,7 @@ function CalendarToolbar({
             </button>
 
             <div className="flex shrink-0 items-center gap-2">
-                <button type="button" className={cn(toolbarButtonClass, 'hidden px-2.5 sm:inline-flex')} onClick={() => onWeekChange(SOURCE_WEEK_START)}>
+                <button type="button" className={cn(toolbarButtonClass, 'hidden px-2.5 sm:inline-flex')} onClick={() => onWeekChange(currentWeekStart())}>
                     Today
                 </button>
 
@@ -179,7 +155,7 @@ function WeekHeader({ days }: { days: Date[] }) {
         <div className="grid h-10 grid-cols-[64px_repeat(7,minmax(0,1fr))] border-b border-border bg-card">
             <div className="flex items-center justify-center text-xs font-medium text-muted-foreground">GMT +8</div>
             {days.map((day) => {
-                const today = dateKey(day) === SOURCE_TODAY;
+                const today = dateKey(day) === dateKey(new Date());
                 return (
                     <div key={dateKey(day)} className={cn('flex items-center justify-center text-xs font-medium text-muted-foreground', today && 'text-foreground')}>
                         <span className="flex items-center gap-1.5 whitespace-nowrap">
@@ -195,9 +171,11 @@ function WeekHeader({ days }: { days: Date[] }) {
     );
 }
 
-function TimeGrid() {
+function TimeGrid({ days, events }: { days: Date[]; events: GardenEvent[] }) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const hours = Array.from({ length: 25 }, (_, hour) => hour);
+    const now = new Date();
+    const todayIsVisible = days.some((day) => dateKey(day) === dateKey(now));
 
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: 440 });
@@ -233,22 +211,42 @@ function TimeGrid() {
                     );
                 })}
 
-                <div className="pointer-events-none absolute left-0 right-0 top-[1217px] z-[8] h-px" aria-label="Current time: 8:30pm">
-                    <span className="absolute left-0 top-0 flex h-4 w-16 -translate-y-1/2 items-center justify-end bg-card pr-[9px] text-xs text-primary">8:30pm</span>
+                {events.map((event) => {
+                    const dayIndex = days.findIndex((day) => dateKey(day) === event.date);
+                    if (dayIndex < 0) return null;
+                    return (
+                        <div
+                            key={event.id}
+                            className="absolute z-[6] overflow-hidden rounded-lg border border-primary/20 bg-primary/10 px-1.5 py-1 text-[10px] text-primary shadow-sm"
+                            style={{
+                                left: `calc(64px + (100% - 64px) * ${dayIndex} / 7 + 2px)`,
+                                width: 'calc((100% - 64px) / 7 - 4px)',
+                                top: 28 + event.startMinutes / 60 * 58,
+                                height: Math.max(38, (event.endMinutes - event.startMinutes) / 60 * 58),
+                            }}
+                            title={`${event.name} · ${event.start}–${event.end}`}
+                        >
+                            <strong className="block truncate">{event.name}</strong>
+                            <span className="block truncate">{event.start}</span>
+                        </div>
+                    );
+                })}
+                {todayIsVisible && <div className="pointer-events-none absolute left-0 right-0 z-[8] h-px" style={{ top: 28 + (now.getHours() * 60 + now.getMinutes()) / 60 * 58 }} aria-label="Current time">
+                    <span className="absolute left-0 top-0 flex h-4 w-16 -translate-y-1/2 items-center justify-end bg-card pr-[9px] text-xs text-primary">{now.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })}</span>
                     <span className="absolute left-[63.5px] top-0 h-3 w-px -translate-y-1/2 bg-primary" aria-hidden="true" />
                     <span className="absolute left-16 right-0 top-0 h-px bg-primary" aria-hidden="true" />
-                </div>
+                </div>}
             </div>
         </div>
     );
 }
 
-function CalendarGrid({ days }: { days: Date[] }) {
+function CalendarGrid({ days, events }: { days: Date[]; events: GardenEvent[] }) {
     return (
         <div className="min-h-0 flex-1 overflow-x-auto">
             <div className="flex h-full min-w-[760px] flex-col">
                 <WeekHeader days={days} />
-                <TimeGrid />
+                <TimeGrid days={days} events={events} />
             </div>
         </div>
     );
@@ -268,7 +266,7 @@ function ListView({ days, events }: { days: Date[]; events: GardenEvent[] }) {
                 {days.map((day) => {
                     const key = dateKey(day);
                     const dayEvents = events.filter((event) => event.date === key);
-                    const today = key === SOURCE_TODAY;
+                    const today = key === dateKey(new Date());
                     const eventLabel = dayEvents.length === 1 ? '1 event' : `${dayEvents.length} events`;
 
                     return (
@@ -305,7 +303,7 @@ function ListView({ days, events }: { days: Date[]; events: GardenEvent[] }) {
                                         </span>
                                     </div>
                                 ) : dayEvents.map((event) => (
-                                    <article key={`${event.date}-${event.name}`} className="relative grid min-h-[76px] grid-cols-[132px_minmax(0,1fr)_132px] items-center border-b border-border/40 transition-colors last:border-b-0 hover:bg-primary/[0.032] max-[900px]:grid-cols-[112px_minmax(0,1fr)] max-[620px]:grid-cols-1 max-[620px]:gap-0 max-[620px]:px-3.5 max-[620px]:py-[10px] max-[620px]:pb-[11px]">
+                                    <article key={event.id} className="relative grid min-h-[76px] grid-cols-[132px_minmax(0,1fr)_132px] items-center border-b border-border/40 transition-colors last:border-b-0 hover:bg-primary/[0.032] max-[900px]:grid-cols-[112px_minmax(0,1fr)] max-[620px]:grid-cols-1 max-[620px]:gap-0 max-[620px]:px-3.5 max-[620px]:py-[10px] max-[620px]:pb-[11px]">
                                         <p className="flex self-stretch items-center whitespace-nowrap px-[18px] text-xs font-medium leading-[17px] tabular-nums text-[#747a62] max-[620px]:h-auto max-[620px]:self-auto max-[620px]:p-0 max-[620px]:text-[11px] max-[620px]:leading-[15px]">
                                             <strong className="font-semibold text-primary">{event.start}</strong>&nbsp;– {event.end}
                                         </p>
@@ -327,22 +325,39 @@ function ListView({ days, events }: { days: Date[]; events: GardenEvent[] }) {
     );
 }
 
-export function GardenCalendarWorkspace({ title, description }: { title: string; description: string }) {
-    const [weekStart, setWeekStart] = useState(() => new Date(SOURCE_WEEK_START));
+export function GardenCalendarWorkspace({ title, description, events }: { title: string; description: string; events: CalendarEventRecord[] }) {
+    const [weekStart, setWeekStart] = useState(currentWeekStart);
     const [view, setView] = useState<CalendarView>('calendar');
+    const gardenEvents = useMemo<GardenEvent[]>(() => events.map((event) => {
+        const start = new Date(event.starts_at);
+        const end = new Date(event.ends_at);
+        const formatTime = (date: Date) => date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
+        return {
+            id: event.id,
+            date: dateKey(start),
+            start: formatTime(start),
+            end: formatTime(end),
+            startMinutes: start.getHours() * 60 + start.getMinutes(),
+            endMinutes: dateKey(end) === dateKey(start) ? end.getHours() * 60 + end.getMinutes() : 24 * 60,
+            name: event.title,
+            location: event.location ?? 'Location to be announced',
+            audience: 'Garden community',
+            type: 'Garden event',
+        };
+    }), [events]);
     const days = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart]);
     const weekEvents = useMemo(() => {
         const startKey = dateKey(days[0]);
         const endKey = dateKey(days[6]);
         return gardenEvents.filter((event) => event.date >= startKey && event.date <= endKey);
-    }, [days]);
+    }, [days, gardenEvents]);
 
     return (
         <AppLayout title={title} description={description}>
             <section className="flex h-[calc(100dvh-181px)] min-h-[360px] flex-col" aria-label="Garden calendar">
                 <CalendarToolbar weekStart={weekStart} view={view} onWeekChange={setWeekStart} onViewChange={setView} />
                 <div className={cn('mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-[#fbf8f2]', view === 'list' ? 'border-border/90 shadow-[0_1px_2px_rgba(64,79,29,0.025)]' : 'border-border')}>
-                    {view === 'calendar' ? <CalendarGrid days={days} /> : <ListView days={days} events={weekEvents} />}
+                    {view === 'calendar' ? <CalendarGrid days={days} events={weekEvents} /> : <ListView days={days} events={weekEvents} />}
                 </div>
             </section>
         </AppLayout>

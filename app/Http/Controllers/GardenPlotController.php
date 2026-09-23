@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GardenPlot;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,14 @@ class GardenPlotController extends Controller
 {
     public function index(Request $request): Response
     {
+        if ($request->user()->role->value === 'member') {
+            return Inertia::render('workspace-page', [
+                'page' => 'garden-plots',
+                'title' => 'Garden plots',
+                'description' => 'Browse available plots and view how they are currently used.',
+            ]);
+        }
+
         $query = GardenPlot::query()->withCount('assignments')->orderBy('plot_code');
         if ($request->string('status')->toString() === 'archived') {
             $query->whereNotNull('archived_at');
@@ -27,6 +36,31 @@ class GardenPlotController extends Controller
         }
 
         return Inertia::render('garden-plots', ['plots' => $query->paginate(10)->withQueryString(), 'filters' => $request->only('search', 'status')]);
+    }
+
+    public function apiIndex(Request $request): JsonResponse
+    {
+        $pendingPlotIds = $request->user()->plotRequests()
+            ->where('status', 'pending')
+            ->whereNotNull('garden_plot_id')
+            ->pluck('garden_plot_id')
+            ->all();
+        $pendingPlotLookup = array_fill_keys($pendingPlotIds, true);
+
+        $plots = GardenPlot::query()->whereNull('archived_at')->orderBy('plot_code')->get()
+            ->map(fn (GardenPlot $plot): array => [
+                'id' => $plot->id,
+                'plot_code' => $plot->plot_code,
+                'location' => $plot->location,
+                'size' => (float) $plot->size,
+                'status' => $plot->status->value,
+                'has_pending_request' => isset($pendingPlotLookup[$plot->id]),
+            ]);
+
+        return response()->json([
+            'data' => $plots,
+            'meta' => ['total' => $plots->count(), 'generated_at' => now()->toIso8601String()],
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

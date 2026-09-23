@@ -7,6 +7,8 @@ use App\Models\PlotAssignment;
 use App\Models\PlotRequest;
 use App\Models\User;
 use App\Notifications\GardenNotification;
+use App\Http\Requests\StorePlotRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +20,33 @@ class PlotRequestController extends Controller
 {
     public function index(Request $request): Response
     {
+        if ($request->user()->role->value === 'member') {
+            $plotRequests = $request->user()->plotRequests()
+                ->with('gardenPlot:id,plot_code,location,size,status')
+                ->latest()
+                ->get()
+                ->map(fn (PlotRequest $plotRequest): array => [
+                    'id' => $plotRequest->id,
+                    'status' => $plotRequest->status->value,
+                    'notes' => $plotRequest->notes,
+                    'submitted_at' => $plotRequest->created_at->toIso8601String(),
+                    'updated_at' => $plotRequest->updated_at->toIso8601String(),
+                    'plot' => $plotRequest->gardenPlot ? [
+                        'plot_code' => $plotRequest->gardenPlot->plot_code,
+                        'location' => $plotRequest->gardenPlot->location,
+                        'size' => (float) $plotRequest->gardenPlot->size,
+                        'status' => $plotRequest->gardenPlot->status->value,
+                    ] : null,
+                ]);
+
+            return Inertia::render('workspace-page', [
+                'page' => 'plot-requests',
+                'title' => 'My plot requests',
+                'description' => 'Submit and track your requests for a community garden plot.',
+                'plotRequests' => $plotRequests,
+            ]);
+        }
+
         $query = PlotRequest::with(['user:id,name,email', 'gardenPlot:id,plot_code,location'])->latest();
         if ($request->user()->role->value === 'member') {
             $query->where('user_id', $request->user()->id);
@@ -41,10 +70,38 @@ class PlotRequestController extends Controller
         abort_unless($request->user()->role->value === 'member', 403);
         $data = $request->validate(['garden_plot_id' => ['required', Rule::exists('garden_plots', 'id')->where(fn ($query) => $query->where('status', 'available')->whereNull('archived_at'))], 'notes' => ['nullable', 'string', 'max:1000']]);
         abort_if($request->user()->plotRequests()->where('status', 'pending')->where('garden_plot_id', $data['garden_plot_id'])->exists(), 422, 'You already have a pending request for this plot.');
-        $plotRequest = $request->user()->plotRequests()->create($data);
-        User::whereIn('role', ['staff', 'admin'])->where('is_active', true)->get()->each->notify(new GardenNotification("New plot request from {$request->user()->name}.", '/plot-requests'));
+        $this->createRequest($request, $data);
 
         return back()->with('success', 'Plot request submitted.');
+    }
+
+    public function storeApi(StorePlotRequest $request): JsonResponse
+    {
+        $plotRequest = $this->createRequest($request, $request->validated());
+        $plotRequest->load('gardenPlot:id,plot_code,location');
+
+        return response()->json([
+            'message' => "Your request for plot {$plotRequest->gardenPlot->plot_code} was submitted.",
+            'data' => [
+                'id' => $plotRequest->id,
+                'status' => $plotRequest->status->value,
+                'plot' => [
+                    'id' => $plotRequest->gardenPlot->id,
+                    'plot_code' => $plotRequest->gardenPlot->plot_code,
+                    'location' => $plotRequest->gardenPlot->location,
+                ],
+                'submitted_at' => $plotRequest->created_at->toIso8601String(),
+            ],
+        ], 201);
+    }
+
+    private function createRequest(Request $request, array $data): PlotRequest
+    {
+        $plotRequest = $request->user()->plotRequests()->create($data);
+        User::whereIn('role', ['staff', 'admin'])->where('is_active', true)->get()
+            ->each->notify(new GardenNotification("New plot request from {$request->user()->name}.", '/plot-requests'));
+
+        return $plotRequest;
     }
 
     public function cancel(Request $request, PlotRequest $plotRequest): RedirectResponse

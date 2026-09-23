@@ -15,6 +15,17 @@ class CalendarEventController extends Controller
 {
     public function index(Request $request): Response
     {
+        if ($request->user()->role->value === 'member') {
+            return Inertia::render('workspace-page', [
+                'page' => 'garden-calendar',
+                'title' => 'Garden calendar',
+                'description' => 'View upcoming events, maintenance, and shared work days.',
+                'calendarEvents' => CalendarEvent::where('status', 'published')
+                    ->orderBy('starts_at')
+                    ->get(['id', 'title', 'description', 'location', 'starts_at', 'ends_at']),
+            ]);
+        }
+
         $query = CalendarEvent::with('creator:id,name')->orderBy('starts_at');
         if ($request->user()->role->value === 'member') {
             $query->where('status', 'published');

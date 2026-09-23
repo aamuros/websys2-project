@@ -13,7 +13,6 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlotRequestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +29,8 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/garden-plots', [GardenPlotController::class, 'apiIndex']);
+    Route::post('/api/plot-requests', [PlotRequestController::class, 'storeApi'])->middleware('role:member');
     Route::get('/garden-plots', [GardenPlotController::class, 'index'])->name('plots.index');
     Route::post('/garden-plots', [GardenPlotController::class, 'store'])->name('plots.store');
     Route::put('/garden-plots/{gardenPlot}', [GardenPlotController::class, 'update'])->name('plots.update');

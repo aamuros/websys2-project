@@ -25,7 +25,8 @@ class StorePlotRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists(GardenPlot::class, 'id')
-                    ->where('status', GardenPlotStatus::Available->value),
+                    ->where('status', GardenPlotStatus::Available->value)
+                    ->whereNull('archived_at'),
                 Rule::unique(PlotRequest::class, 'garden_plot_id')
                     ->where('user_id', $this->user()->id)
                     ->where('status', PlotRequestStatus::Pending->value),
