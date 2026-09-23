@@ -42,7 +42,7 @@ class CalendarEventController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $this->validated($request);
         $event = CalendarEvent::create([...$data, 'created_by' => $request->user()->id, 'published_at' => $data['status'] === 'published' ? now() : null]);
         if ($data['status'] === 'published') {
@@ -54,7 +54,7 @@ class CalendarEventController extends Controller
 
     public function update(Request $request, CalendarEvent $event): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $this->validated($request);
         $publishing = $event->status !== 'published' && $data['status'] === 'published';
         $event->update([...$data, 'published_at' => $publishing ? now() : $event->published_at]);
@@ -67,7 +67,7 @@ class CalendarEventController extends Controller
 
     public function publish(Request $request, CalendarEvent $event): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $event->update(['status' => 'published', 'published_at' => now()]);
         $this->notifyPublished($request, $event);
 
@@ -76,7 +76,7 @@ class CalendarEventController extends Controller
 
     public function archive(Request $request, CalendarEvent $event): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $event->update(['status' => 'archived']);
 
         return back()->with('success', 'Event archived.');
@@ -89,6 +89,6 @@ class CalendarEventController extends Controller
 
     private function notifyPublished(Request $request, CalendarEvent $event): void
     {
-        User::where('is_active', true)->whereKeyNot($request->user()->id)->get()->each->notify(new GardenNotification("New garden event: {$event->title}", '/garden-calendar'));
+        User::whereIn('role', ['member', 'staff'])->where('is_active', true)->whereKeyNot($request->user()->id)->get()->each->notify(new GardenNotification("New garden event: {$event->title}", '/garden-calendar'));
     }
 }

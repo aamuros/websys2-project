@@ -79,9 +79,31 @@ class OperationalWorkflowTest extends TestCase
 
     public function test_operational_reports_can_be_exported_as_csv(): void
     {
-        $staff = User::factory()->create(['role' => UserRole::Staff]);
-        $this->actingAs($staff)->get('/reports/export?from=2026-09-01&to=2026-09-30')
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $this->actingAs($admin)->get('/reports/export?from=2026-09-01&to=2026-09-30')
             ->assertOk()
             ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_admin_cannot_manage_staff_pages(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $plot = GardenPlot::create(['plot_code' => 'A-11', 'location' => 'North', 'size' => 12, 'status' => GardenPlotStatus::Available]);
+
+        $this->actingAs($admin)->get('/garden-plots')->assertForbidden();
+        $this->actingAs($admin)->get('/plot-requests')->assertForbidden();
+        $this->actingAs($admin)->get('/assignments')->assertForbidden();
+        $this->actingAs($admin)->get('/garden-calendar')->assertForbidden();
+        $this->actingAs($admin)->post('/garden-plots', ['plot_code' => 'A-12', 'location' => 'North', 'size' => 12, 'status' => 'available'])->assertForbidden();
+        $this->actingAs($admin)->put("/garden-plots/{$plot->id}", ['plot_code' => 'A-11', 'location' => 'North', 'size' => 12, 'status' => 'maintenance'])->assertForbidden();
+    }
+
+    public function test_staff_cannot_open_admin_pages(): void
+    {
+        $staff = User::factory()->create(['role' => UserRole::Staff]);
+
+        $this->actingAs($staff)->get('/reports')->assertForbidden();
+        $this->actingAs($staff)->get('/reports/export')->assertForbidden();
+        $this->actingAs($staff)->get('/members')->assertForbidden();
     }
 }

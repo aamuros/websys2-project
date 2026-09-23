@@ -35,12 +35,12 @@ const navigationItems: Array<{
     icon: typeof LayoutDashboard;
     roles: UserRole[];
 }> = [
-    { label: 'Garden plots', href: '/garden-plots', icon: Map, roles: ['member', 'staff', 'admin'] },
-    { label: 'Plot requests', memberLabel: 'My plot requests', href: '/plot-requests', icon: ClipboardList, roles: ['member', 'staff', 'admin'] },
-    { label: 'Assignments', memberLabel: 'My assignments', href: '/assignments', icon: Sprout, roles: ['member', 'staff', 'admin'] },
-    { label: 'Garden calendar', href: '/garden-calendar', icon: CalendarDays, roles: ['member', 'staff', 'admin'] },
+    { label: 'Garden plots', href: '/garden-plots', icon: Map, roles: ['member', 'staff'] },
+    { label: 'Plot requests', memberLabel: 'My plot requests', href: '/plot-requests', icon: ClipboardList, roles: ['member', 'staff'] },
+    { label: 'Assignments', memberLabel: 'My assignments', href: '/assignments', icon: Sprout, roles: ['member', 'staff'] },
+    { label: 'Garden calendar', href: '/garden-calendar', icon: CalendarDays, roles: ['member', 'staff'] },
     { label: 'Community updates', href: '/community-updates', icon: Megaphone, roles: ['member', 'staff', 'admin'] },
-    { label: 'Reports', href: '/reports', icon: FileChartColumn, roles: ['staff', 'admin'] },
+    { label: 'Reports', href: '/reports', icon: FileChartColumn, roles: ['admin'] },
     { label: 'Members', href: '/members', icon: UsersRound, roles: ['admin'] },
 ];
 

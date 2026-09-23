@@ -65,7 +65,7 @@ class GardenPlotController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $this->validated($request);
         abort_if($data['status'] === 'occupied', 422, 'Occupied status is managed through assignments.');
         GardenPlot::create($data);
@@ -75,7 +75,7 @@ class GardenPlotController extends Controller
 
     public function update(Request $request, GardenPlot $gardenPlot): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $this->validated($request, $gardenPlot);
         abort_if($data['status'] === 'occupied' && ! $gardenPlot->assignments()->where('status', 'active')->exists(), 422, 'Occupied status is managed through assignments.');
         abort_if($gardenPlot->assignments()->where('status', 'active')->exists() && $data['status'] !== 'occupied', 422, 'End the active assignment before changing this plot status.');
@@ -86,7 +86,7 @@ class GardenPlotController extends Controller
 
     public function archive(Request $request, GardenPlot $gardenPlot): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         abort_if($gardenPlot->assignments()->where('status', 'active')->exists(), 422, 'An occupied plot cannot be archived.');
         $gardenPlot->update(['archived_at' => now()]);
 

@@ -37,7 +37,7 @@ class AssignmentController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $this->validated($request);
         DB::transaction(function () use ($request, $data) {
             $plot = GardenPlot::lockForUpdate()->findOrFail($data['garden_plot_id']);
@@ -53,7 +53,7 @@ class AssignmentController extends Controller
 
     public function update(Request $request, PlotAssignment $assignment): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         abort_unless($assignment->status->value === 'active', 422);
         $assignment->update($request->validate(['start_date' => ['required', 'date'], 'end_date' => ['nullable', 'date', 'after_or_equal:start_date']]));
 
@@ -62,7 +62,7 @@ class AssignmentController extends Controller
 
     public function close(Request $request, PlotAssignment $assignment): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $request->validate(['status' => ['required', Rule::in(['ended', 'cancelled'])], 'end_date' => ['required', 'date', 'after_or_equal:'.$assignment->start_date->toDateString()]]);
         DB::transaction(function () use ($assignment, $data) {
             abort_unless($assignment->status->value === 'active', 422);

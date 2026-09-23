@@ -143,12 +143,12 @@ The application shell is shared, but workspace navigation and server-side page a
 | Page | Member | Staff | Admin |
 | --- | :---: | :---: | :---: |
 | Dashboard | Yes | Yes | Yes |
-| Garden plots | Yes | Yes | Yes |
-| Plot requests | Own | Yes | Yes |
-| Assignments | Own | Yes | Yes |
-| Garden calendar | Yes | Yes | Yes |
+| Garden plots | Browse | Manage | No |
+| Plot requests | Own | Review | No |
+| Assignments | Own | Manage | No |
+| Garden calendar | View | Manage | No |
 | Community updates | Yes | Yes | Yes |
-| Reports | No | Yes | Yes |
+| Reports | No | No | Yes |
 | Members | No | No | Yes |
 | Help center and settings | Yes | Yes | Yes |
 

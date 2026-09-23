@@ -15,7 +15,7 @@ class ReportController extends Controller
 {
     public function index(Request $request): Response
     {
-        $this->requireOperations($request);
+        $this->requireAdmin($request);
         [$from, $to] = $this->range($request);
 
         return Inertia::render('reports', [
@@ -32,7 +32,7 @@ class ReportController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $this->requireOperations($request);
+        $this->requireAdmin($request);
         [$from, $to] = $this->range($request);
 
         return response()->streamDownload(function () use ($from, $to) {

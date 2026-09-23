@@ -32,7 +32,7 @@ class DashboardController extends Controller
 
     public function admin(): Response
     {
-        return Inertia::render('admin/dashboard', ['metrics' => [...$this->operationsMetrics(), 'members' => User::where('role', 'member')->count(), 'staff' => User::where('role', 'staff')->count(), 'suspended' => User::where('is_active', false)->count()], 'requests' => PlotRequest::with(['user', 'gardenPlot'])->where('status', 'pending')->oldest()->limit(6)->get()]);
+        return Inertia::render('admin/dashboard', ['metrics' => [...$this->operationsMetrics(), 'members' => User::where('role', 'member')->count(), 'staff' => User::where('role', 'staff')->count(), 'suspended' => User::where('is_active', false)->count()]]);
     }
 
     private function operationsMetrics(): array

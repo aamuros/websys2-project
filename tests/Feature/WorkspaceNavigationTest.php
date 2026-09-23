@@ -24,10 +24,9 @@ class WorkspaceNavigationTest extends TestCase
             ],
             UserRole::Staff->value => [
                 'garden-plots', 'plot-requests', 'assignments', 'garden-calendar',
-                'community-updates', 'reports', 'help', 'settings',
+                'community-updates', 'help', 'settings',
             ],
             UserRole::Admin->value => [
-                'garden-plots', 'plot-requests', 'assignments', 'garden-calendar',
                 'community-updates', 'reports', 'members', 'help', 'settings',
             ],
         ];
@@ -40,7 +39,10 @@ class WorkspaceNavigationTest extends TestCase
                 $response = $this->actingAs($user)->get('/'.$page);
 
                 if (in_array($page, $access[$role->value], true)) {
-                    $response->assertOk()->assertInertia(fn ($inertia) => $inertia->component($page === 'garden-plots' ? 'garden-plots' : $page));
+                    $component = $role === UserRole::Member && in_array($page, ['garden-plots', 'plot-requests', 'garden-calendar'], true)
+                        ? 'workspace-page'
+                        : $page;
+                    $response->assertOk()->assertInertia(fn ($inertia) => $inertia->component($component));
                 } else {
                     $response->assertForbidden();
                 }
@@ -54,7 +56,7 @@ class WorkspaceNavigationTest extends TestCase
 
         $this->actingAs($member)
             ->get('/plot-requests')
-            ->assertInertia(fn ($page) => $page->component('plot-requests'));
+            ->assertInertia(fn ($page) => $page->component('workspace-page')->where('title', 'My plot requests'));
 
         $this->actingAs($member)
             ->get('/assignments')

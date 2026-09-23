@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePlotRequest;
 use App\Models\GardenPlot;
 use App\Models\PlotAssignment;
 use App\Models\PlotRequest;
 use App\Models\User;
 use App\Notifications\GardenNotification;
-use App\Http\Requests\StorePlotRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -97,8 +97,8 @@ class PlotRequestController extends Controller
 
     private function createRequest(Request $request, array $data): PlotRequest
     {
-        $plotRequest = $request->user()->plotRequests()->create($data);
-        User::whereIn('role', ['staff', 'admin'])->where('is_active', true)->get()
+        $plotRequest = $request->user()->plotRequests()->create([...$data, 'status' => 'pending']);
+        User::where('role', 'staff')->where('is_active', true)->get()
             ->each->notify(new GardenNotification("New plot request from {$request->user()->name}.", '/plot-requests'));
 
         return $plotRequest;
@@ -114,7 +114,7 @@ class PlotRequestController extends Controller
 
     public function approve(Request $request, PlotRequest $plotRequest): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $request->validate(['start_date' => ['required', 'date'], 'end_date' => ['nullable', 'date', 'after_or_equal:start_date'], 'decision_notes' => ['nullable', 'string', 'max:1000']]);
         DB::transaction(function () use ($request, $plotRequest, $data) {
             $plotRequest = PlotRequest::lockForUpdate()->findOrFail($plotRequest->id);
@@ -133,7 +133,7 @@ class PlotRequestController extends Controller
 
     public function reject(Request $request, PlotRequest $plotRequest): RedirectResponse
     {
-        $this->requireOperations($request);
+        $this->requireStaff($request);
         $data = $request->validate(['decision_notes' => ['required', 'string', 'max:1000']]);
         abort_unless($plotRequest->status->value === 'pending', 422);
         $plotRequest->update([...$data, 'status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
