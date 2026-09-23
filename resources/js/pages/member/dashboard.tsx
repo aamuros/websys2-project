@@ -9,7 +9,7 @@ import {
 import { AppLayout } from '@/layouts/app-layout';
 import type { SharedPageProps } from '@/types';
 
-type Assignment = { start_date: string; garden_plot: { plot_code: string; location: string } };
+type Assignment = { id: number; start_date: string; garden_plot: { plot_code: string; location: string } };
 type PlotRequest = { id: number; status: string; created_at: string; garden_plot: { plot_code: string } | null };
 type GardenEvent = { id: number; title: string; location: string | null; starts_at: string; ends_at: string };
 type CommunityUpdate = { id: number; title: string; body: string; published_at: string | null };
@@ -81,11 +81,11 @@ export default function MemberDashboard({ assignment, requests, events, updates 
                                     <h3 className="mt-[23px] max-w-[520px] text-[30px] font-[760] leading-9 tracking-[-0.026em] text-foreground">{assignment ? 'Your plot is ready for the week.' : 'Find a plot to call your own.'}</h3>
                                     <p className="mt-2.5 max-w-[530px] text-sm leading-[22px] text-muted-foreground">{assignment ? `Plot ${assignment.garden_plot.plot_code} in ${assignment.garden_plot.location} is assigned to you.${nextEvent ? ` Your next garden event is ${nextEvent.title} on ${dateLabel(nextEvent.starts_at)}.` : ''}` : 'Browse available plots and submit a request to the garden team.'}</p>
                                     <div className="mt-auto flex flex-col gap-2 pt-[22px] sm:flex-row">
-                                        <Link href={assignment ? '/assignments' : '/garden-plots'} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-[15px] text-sm font-semibold text-primary-foreground shadow-[0_2px_6px_rgba(64,79,29,0.16)] transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-[#354318] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
-                                            {assignment ? 'View plot details' : 'Browse garden plots'}<ArrowRight className="size-4" aria-hidden="true" />
+                                        <Link href={assignment ? `/assignments?status=active&plant=${assignment.id}` : '/garden-plots'} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-[15px] text-sm font-semibold text-primary-foreground shadow-[0_2px_6px_rgba(64,79,29,0.16)] transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-[#354318] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
+                                            {assignment ? 'Add planting' : 'Browse garden plots'}<ArrowRight className="size-4" aria-hidden="true" />
                                         </Link>
-                                        <Link href="/garden-calendar" className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-[15px] text-sm font-semibold text-primary transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
-                                            <CalendarDays className="size-4" aria-hidden="true" />Open calendar
+                                        <Link href={assignment ? '/assignments' : '/garden-calendar'} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-primary/15 bg-white px-[15px] text-sm font-semibold text-primary transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
+                                            {assignment ? <Sprout className="size-4" aria-hidden="true" /> : <CalendarDays className="size-4" aria-hidden="true" />}{assignment ? 'View plot details' : 'Open calendar'}
                                         </Link>
                                     </div>
                                 </div>

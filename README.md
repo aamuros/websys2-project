@@ -144,8 +144,9 @@ The application shell is shared, but workspace navigation and server-side page a
 | --- | :---: | :---: | :---: |
 | Dashboard | Yes | Yes | Yes |
 | Garden plots | Browse | Manage | No |
+| Crops | No | Manage | No |
 | Plot requests | Own | Review | No |
-| Assignments | Own | Manage | No |
+| Assignments and plantings | Own | Manage assignments | No |
 | Garden calendar | View | Manage | No |
 | Community updates | Yes | Yes | Yes |
 | Reports | No | No | Yes |

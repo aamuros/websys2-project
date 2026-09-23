@@ -36,6 +36,7 @@ const navigationItems: Array<{
     roles: UserRole[];
 }> = [
     { label: 'Garden plots', href: '/garden-plots', icon: Map, roles: ['member', 'staff'] },
+    { label: 'Crops', href: '/crops', icon: Sprout, roles: ['staff'] },
     { label: 'Plot requests', memberLabel: 'My plot requests', href: '/plot-requests', icon: ClipboardList, roles: ['member', 'staff'] },
     { label: 'Assignments', memberLabel: 'My assignments', href: '/assignments', icon: Sprout, roles: ['member', 'staff'] },
     { label: 'Garden calendar', href: '/garden-calendar', icon: CalendarDays, roles: ['member', 'staff'] },
