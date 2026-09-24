@@ -15,7 +15,7 @@ import {
     Sprout,
     UsersRound,
 } from 'lucide-react';
-import { useState, type PropsWithChildren, type ReactNode } from 'react';
+import { useEffect, useState, type PropsWithChildren, type ReactNode } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -160,6 +160,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export function AppLayout({ title, description, actions, children }: PropsWithChildren<{ title: string; description: string; actions?: ReactNode }>) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const { flash } = usePage<SharedPageProps>().props;
+    const [visibleFlash, setVisibleFlash] = useState(flash);
+
+    useEffect(() => {
+        setVisibleFlash(flash);
+
+        if (!flash.success && !flash.error) return;
+
+        const timer = window.setTimeout(() => setVisibleFlash({}), 5000);
+        return () => window.clearTimeout(timer);
+    }, [flash]);
 
     return (
         <div className="h-dvh min-h-[480px] overflow-hidden bg-primary">
@@ -195,7 +205,7 @@ export function AppLayout({ title, description, actions, children }: PropsWithCh
                         </div>
                         {actions && <div className="w-full shrink-0 sm:w-auto">{actions}</div>}
                     </div>
-                    {(flash.success || flash.error) && <div role="status" className={cn('mx-auto mb-4 w-full max-w-[1151px] rounded-xl border px-4 py-3 text-sm', flash.error ? 'border-destructive/30 bg-destructive/10 text-destructive' : 'border-primary/20 bg-primary/5')}>{flash.error ?? flash.success}</div>}
+                    {(visibleFlash.success || visibleFlash.error) && <div role="status" className={cn('mx-auto mb-4 w-full max-w-[1151px] rounded-xl border px-4 py-3 text-sm', visibleFlash.error ? 'border-destructive/30 bg-destructive/10 text-destructive' : 'border-primary/20 bg-primary/5')}>{visibleFlash.error ?? visibleFlash.success}</div>}
                     <div className="mx-auto w-full max-w-[1151px] animate-rise-in">{children}</div>
                 </main>
             </div>
