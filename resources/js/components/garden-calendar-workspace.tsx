@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 type CalendarView = 'calendar' | 'list';
 
 interface GardenEvent {
-    id: number;
+    id: string | number;
     date: string;
     start: string;
     end: string;
@@ -23,6 +23,7 @@ interface GardenEvent {
     location: string;
     audience: string;
     type: string;
+    forecast?: boolean;
 }
 
 export interface CalendarEventRecord {
@@ -32,6 +33,16 @@ export interface CalendarEventRecord {
     location: string | null;
     starts_at: string;
     ends_at: string;
+}
+
+interface CropForecastRecord {
+    id: string;
+    crop: { name: string };
+    harvest_start_earliest: string;
+    harvest_start_latest: string;
+    harvest_window_end: string | null;
+    basis_note: string | null;
+    plot: { code: string; location: string };
 }
 
 const TIME_GRID_HEIGHT = 1430;
@@ -217,7 +228,7 @@ function TimeGrid({ days, events }: { days: Date[]; events: GardenEvent[] }) {
                     return (
                         <div
                             key={event.id}
-                            className="absolute z-[6] overflow-hidden rounded-lg border border-primary/20 bg-primary/10 px-1.5 py-1 text-[10px] text-primary shadow-sm"
+                            className={cn('absolute z-[6] overflow-hidden rounded-lg border px-1.5 py-1 text-[10px] shadow-sm', event.forecast ? 'border-amber-700/25 bg-amber-100 text-amber-950' : 'border-primary/20 bg-primary/10 text-primary')}
                             style={{
                                 left: `calc(64px + (100% - 64px) * ${dayIndex} / 7 + 2px)`,
                                 width: 'calc((100% - 64px) / 7 - 4px)',
@@ -313,7 +324,7 @@ function ListView({ days, events }: { days: Date[]; events: GardenEvent[] }) {
                                                 {event.location}<span className="px-1 text-[#a4a895]">·</span>{event.audience}
                                             </p>
                                         </div>
-                                        <span className="mr-[22px] inline-flex min-h-[25px] items-center justify-center justify-self-end whitespace-nowrap rounded-full border border-primary/10 bg-primary/[0.055] px-[9px] py-1 text-[10.5px] font-semibold leading-[15px] text-primary max-[900px]:hidden">{event.type}</span>
+                                        <span className={cn('mr-[22px] inline-flex min-h-[25px] items-center justify-center justify-self-end whitespace-nowrap rounded-full border px-[9px] py-1 text-[10.5px] font-semibold leading-[15px] max-[900px]:hidden', event.forecast ? 'border-amber-700/20 bg-amber-100 text-amber-950' : 'border-primary/10 bg-primary/[0.055] text-primary')}>{event.type}</span>
                                     </article>
                                 ))}
                             </div>
@@ -328,6 +339,25 @@ function ListView({ days, events }: { days: Date[]; events: GardenEvent[] }) {
 export function GardenCalendarWorkspace({ title, description, events }: { title: string; description: string; events: CalendarEventRecord[] }) {
     const [weekStart, setWeekStart] = useState(currentWeekStart);
     const [view, setView] = useState<CalendarView>('calendar');
+    const [forecasts, setForecasts] = useState<CropForecastRecord[]>([]);
+    const [forecastError, setForecastError] = useState(false);
+    useEffect(() => {
+        const weekEnd = addDays(weekStart, 6);
+        const controller = new AbortController();
+        setForecastError(false);
+        fetch(`/api/garden-calendar/forecasts?from=${dateKey(weekStart)}&to=${dateKey(weekEnd)}`, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+        }).then(response => {
+            if (!response.ok) throw new Error('Forecast request failed');
+            return response.json() as Promise<{ data: CropForecastRecord[] }>;
+        }).then(response => setForecasts(response.data)).catch(error => {
+            if (error instanceof DOMException && error.name === 'AbortError') return;
+            setForecasts([]);
+            setForecastError(true);
+        });
+        return () => controller.abort();
+    }, [weekStart]);
     const gardenEvents = useMemo<GardenEvent[]>(() => events.map((event) => {
         const start = new Date(event.starts_at);
         const end = new Date(event.ends_at);
@@ -349,13 +379,37 @@ export function GardenCalendarWorkspace({ title, description, events }: { title:
     const weekEvents = useMemo(() => {
         const startKey = dateKey(days[0]);
         const endKey = dateKey(days[6]);
-        return gardenEvents.filter((event) => event.date >= startKey && event.date <= endKey);
-    }, [days, gardenEvents]);
+        const dateLabel = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+        const forecastEvents: GardenEvent[] = forecasts.flatMap(forecast => {
+            const first = forecast.harvest_start_earliest;
+            const last = forecast.harvest_window_end ?? forecast.harvest_start_latest;
+            if (last < startKey || first > endKey) return [];
+            const visibleDate = first < startKey ? startKey : first;
+            const rangeLabel = first === forecast.harvest_start_latest ? dateLabel(first) : `${dateLabel(first)}–${dateLabel(forecast.harvest_start_latest)}`;
+            const description = forecast.basis_note ? ` · ${forecast.basis_note}` : '';
+            return [{
+                id: forecast.id,
+                date: visibleDate,
+                start: '9:00am',
+                end: '10:00am',
+                startMinutes: 540,
+                endMinutes: 600,
+                name: `Harvest estimate: ${forecast.crop.name} (${rangeLabel})`,
+                location: `Plot ${forecast.plot.code} · ${forecast.plot.location}${description}`,
+                audience: 'Estimated harvest window',
+                type: 'Estimate',
+                forecast: true,
+            }];
+        });
+        return [...gardenEvents.filter((event) => event.date >= startKey && event.date <= endKey), ...forecastEvents]
+            .sort((a, b) => a.date.localeCompare(b.date) || a.startMinutes - b.startMinutes);
+    }, [days, forecasts, gardenEvents]);
 
     return (
         <AppLayout title={title} description={description}>
             <section className="flex h-[calc(100dvh-181px)] min-h-[360px] flex-col" aria-label="Garden calendar">
                 <CalendarToolbar weekStart={weekStart} view={view} onWeekChange={setWeekStart} onViewChange={setView} />
+                {forecastError && <p className="mt-2 text-xs text-muted-foreground" role="status">Harvest estimates could not be loaded right now.</p>}
                 <div className={cn('mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-[#fbf8f2]', view === 'list' ? 'border-border/90 shadow-[0_1px_2px_rgba(64,79,29,0.025)]' : 'border-border')}>
                     {view === 'calendar' ? <CalendarGrid days={days} events={weekEvents} /> : <ListView days={days} events={weekEvents} />}
                 </div>
