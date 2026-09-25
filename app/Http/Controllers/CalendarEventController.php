@@ -15,11 +15,12 @@ class CalendarEventController extends Controller
 {
     public function index(Request $request): Response
     {
-        if ($request->user()->role->value === 'member') {
+        if ($request->user()->role->value === 'member' || ($request->user()->role->value === 'staff' && $request->query('view') === 'forecasts')) {
             return Inertia::render('workspace-page', [
                 'page' => 'garden-calendar',
                 'title' => 'Garden calendar',
                 'description' => 'View upcoming events, maintenance, and shared work days.',
+                'manageEventsHref' => $request->user()->role->value === 'staff' ? '/garden-calendar' : null,
                 'calendarEvents' => CalendarEvent::where('status', 'published')
                     ->orderBy('starts_at')
                     ->get(['id', 'title', 'description', 'location', 'starts_at', 'ends_at']),

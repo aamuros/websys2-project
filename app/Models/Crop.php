@@ -10,7 +10,16 @@ class Crop extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type'];
+    protected $fillable = ['name', 'type', 'maturity_days_min', 'maturity_days_max', 'harvest_window_days', 'maturity_source'];
+
+    protected function casts(): array
+    {
+        return [
+            'maturity_days_min' => 'integer',
+            'maturity_days_max' => 'integer',
+            'harvest_window_days' => 'integer',
+        ];
+    }
 
     public function plantings(): HasMany
     {
