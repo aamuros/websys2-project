@@ -44,7 +44,9 @@ class CropCycleForecastController extends Controller
         $query = Planting::query()
             ->with(['crop', 'assignment.gardenPlot'])
             ->whereHas('crop', fn ($crop) => $crop->whereNotNull('maturity_days_min')->whereNotNull('maturity_days_max'))
-            ->whereDate('planted_at', '<=', $rangeEnd->toDateString());
+            // Validation caps maturity and harvest duration at 3650 days each.
+            ->where('planted_at', '>=', $rangeStart->subDays(7300)->toDateString())
+            ->where('planted_at', '<=', $rangeEnd->toDateString());
 
         if ($request->user()->role->value === 'member') {
             $query->whereHas('assignment', fn ($assignment) => $assignment->where('user_id', $request->user()->id));

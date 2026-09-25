@@ -60,6 +60,21 @@ class CropCycleForecastTest extends TestCase
             ->assertJsonCount(1, 'data');
     }
 
+    public function test_staff_can_open_forecast_calendar_and_return_to_event_management(): void
+    {
+        $staff = User::factory()->create(['role' => UserRole::Staff]);
+
+        $this->actingAs($staff)->get('/garden-calendar?view=forecasts')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('workspace-page')
+                ->where('page', 'garden-calendar')
+                ->where('manageEventsHref', '/garden-calendar'));
+
+        $this->actingAs($staff)->get('/garden-calendar')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('garden-calendar'));
+    }
+
     public function test_unconfigured_crop_is_omitted_and_calendar_range_overlap_is_inclusive(): void
     {
         $member = User::factory()->create();

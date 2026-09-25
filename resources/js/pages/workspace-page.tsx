@@ -10,12 +10,14 @@ export default function WorkspacePage({
     page,
     plotRequests = [],
     calendarEvents = [],
+    manageEventsHref = null,
 }: {
     title: string;
     description: string;
     page: string;
     plotRequests?: PlotRequest[];
     calendarEvents?: CalendarEventRecord[];
+    manageEventsHref?: string | null;
 }) {
     if (page === 'garden-plots') {
         return (
@@ -39,7 +41,7 @@ export default function WorkspacePage({
         return (
             <>
                 <Head title={title} />
-                <GardenCalendarWorkspace title={title} description={description} events={calendarEvents} />
+                <GardenCalendarWorkspace title={title} description={description} events={calendarEvents} manageEventsHref={manageEventsHref} />
             </>
         );
     }
