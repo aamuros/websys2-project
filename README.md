@@ -125,6 +125,14 @@ These accounts are obvious local fixtures and must not be seeded into production
 | Staff | `staff@garden.test` | `Garden123!` |
 | Member | `member@garden.test` | `Garden123!` |
 
+Populate an existing local database without resetting it:
+
+```bash
+php artisan db:seed
+```
+
+Development data includes 15 plots, 10 accounts, requests in every status, active and past assignments, eight crops, planting records, community announcements, and events in the current week for both calendar and list views. Event dates are relative to the first seed run. Rerunning the seeder adds missing sample records while preserving existing accounts and edits. Sign in as `member@garden.test` to see the sample personal assignment, planting records, and request history.
+
 Public registration always creates a `member` account. Admin and staff roles must be assigned through a trusted backend workflow in a future feature.
 
 ## Routes and authorization

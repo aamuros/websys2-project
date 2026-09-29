@@ -6,11 +6,12 @@ import {
     Clock3,
     Sprout,
 } from 'lucide-react';
+import { RequestBadge, type RequestStatus } from '@/components/plot-request-status';
 import { AppLayout } from '@/layouts/app-layout';
 import type { SharedPageProps } from '@/types';
 
 type Assignment = { id: number; start_date: string; garden_plot: { plot_code: string; location: string } };
-type PlotRequest = { id: number; status: string; created_at: string; garden_plot: { plot_code: string } | null };
+type PlotRequest = { id: number; status: RequestStatus; created_at: string; garden_plot: { plot_code: string } | null };
 type GardenEvent = { id: number; title: string; location: string | null; starts_at: string; ends_at: string };
 type CommunityUpdate = { id: number; title: string; body: string; published_at: string | null };
 
@@ -41,9 +42,7 @@ export default function MemberDashboard({ assignment, requests, events, updates 
             >
                 <div className="pb-9">
                     <section aria-labelledby="garden-overview-title">
-                        <div className="mb-5 flex h-7 items-center justify-between">
-                            <h2 id="garden-overview-title" className="text-xl font-[750] leading-7 tracking-[-0.015em] text-foreground">Your garden</h2>
-                        </div>
+                        <h2 id="garden-overview-title" className="sr-only">Your garden</h2>
 
                         <div className="grid gap-6 lg:h-[282px] lg:grid-cols-[330px_minmax(0,1fr)]">
                             <article className="relative flex min-h-[282px] flex-col overflow-hidden rounded-3xl border border-white/45 bg-[#e9ebdf]">
@@ -94,9 +93,7 @@ export default function MemberDashboard({ assignment, requests, events, updates 
                     </section>
 
                     <section className="mt-[34px]" aria-labelledby="week-title">
-                        <div className="mb-5 flex h-7 items-center justify-between">
-                            <h2 id="week-title" className="text-xl font-[750] leading-7 tracking-[-0.015em] text-foreground">This week</h2>
-                        </div>
+                        <h2 id="week-title" className="sr-only">This week</h2>
 
                         <div className="grid gap-6 lg:h-[300px] lg:grid-cols-2">
                             <article className="overflow-hidden rounded-3xl border border-primary/10 bg-white p-[22px] shadow-[0_4px_16px_rgba(64,79,29,0.03)]">
@@ -139,9 +136,7 @@ export default function MemberDashboard({ assignment, requests, events, updates 
                     </section>
 
                     <section className="mt-[34px]" aria-labelledby="activity-title">
-                        <div className="mb-5 flex h-7 items-center justify-between">
-                            <h2 id="activity-title" className="text-xl font-[750] leading-7 tracking-[-0.015em] text-foreground">Recent activity</h2>
-                        </div>
+                        <h2 id="activity-title" className="sr-only">Recent activity</h2>
                         <div className="overflow-hidden rounded-3xl border border-primary/10 bg-white px-[22px] py-1 shadow-[0_4px_16px_rgba(64,79,29,0.03)]">
                             {requests.length ? requests.map((item) => (
                                     <Link key={item.id} href="/plot-requests" className="grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-6 border-t border-primary/[0.08] py-3.5 first:border-t-0">
@@ -152,7 +147,7 @@ export default function MemberDashboard({ assignment, requests, events, updates 
                                                 <p className="mt-0.5 text-xs leading-[18px] text-muted-foreground">Submitted {dateLabel(item.created_at)}</p>
                                             </div>
                                         </div>
-                                        <span className="inline-flex min-w-[76px] items-center justify-center rounded-full bg-primary/[0.08] px-2.5 py-1.5 text-[11px] font-bold capitalize text-primary">{item.status}</span>
+                                        <RequestBadge status={item.status} />
                                     </Link>
                             )) : <p className="py-5 text-sm text-muted-foreground">Your plot requests will appear here.</p>}
                         </div>

@@ -22,7 +22,7 @@ class OperationalWorkflowTest extends TestCase
         $staff = User::factory()->create(['role' => UserRole::Staff]);
         $plot = GardenPlot::create(['plot_code' => 'A-10', 'location' => 'North', 'size' => 12, 'status' => GardenPlotStatus::Available]);
 
-        $this->actingAs($member)->post('/plot-requests', ['garden_plot_id' => $plot->id, 'notes' => 'Herbs'])->assertRedirect();
+        $this->actingAs($member)->post('/plot-requests', ['garden_plot_id' => $plot->id, 'notes' => 'Herbs for the community kitchen.'])->assertRedirect();
         $plotRequest = PlotRequest::firstOrFail();
         $this->actingAs($staff)->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-22'])->assertRedirect();
 

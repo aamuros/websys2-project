@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import {
     CalendarDays,
     CalendarMinus2,
@@ -7,6 +8,7 @@ import {
     List,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 
@@ -325,7 +327,7 @@ function ListView({ days, events }: { days: Date[]; events: GardenEvent[] }) {
     );
 }
 
-export function GardenCalendarWorkspace({ title, description, events }: { title: string; description: string; events: CalendarEventRecord[] }) {
+export function GardenCalendarWorkspace({ title, description, events, manageEventsHref }: { title: string; description: string; events: CalendarEventRecord[]; manageEventsHref?: string | null }) {
     const [weekStart, setWeekStart] = useState(currentWeekStart);
     const [view, setView] = useState<CalendarView>('calendar');
     const gardenEvents = useMemo<GardenEvent[]>(() => events.map((event) => {
@@ -353,7 +355,7 @@ export function GardenCalendarWorkspace({ title, description, events }: { title:
     }, [days, gardenEvents]);
 
     return (
-        <AppLayout title={title} description={description}>
+        <AppLayout title={title} description={description} actions={manageEventsHref ? <Button asChild variant="outline" className="rounded-xl"><Link href={manageEventsHref}>Manage events</Link></Button> : undefined}>
             <section className="flex h-[calc(100dvh-181px)] min-h-[360px] flex-col" aria-label="Garden calendar">
                 <CalendarToolbar weekStart={weekStart} view={view} onWeekChange={setWeekStart} onViewChange={setView} />
                 <div className={cn('mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-[#fbf8f2]', view === 'list' ? 'border-border/90 shadow-[0_1px_2px_rgba(64,79,29,0.025)]' : 'border-border')}>

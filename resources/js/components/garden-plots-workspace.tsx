@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     CheckCircle2,
@@ -26,6 +26,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { WorkspaceSearch } from '@/components/workspace-search';
 import { AppLayout } from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { SharedPageProps } from '@/types';
@@ -360,6 +361,7 @@ function RequestPlotDialog({
 export function GardenPlotsWorkspace({ title, description }: { title: string; description: string }) {
     const { auth } = usePage<SharedPageProps>().props;
     const isMember = auth.user?.role === 'member';
+    const isStaff = auth.user?.role === 'staff';
     const [plots, setPlots] = useState<GardenPlot[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -427,17 +429,10 @@ export function GardenPlotsWorkspace({ title, description }: { title: string; de
             title={title}
             description={description}
             actions={(
-                <label className="relative block w-full sm:w-[233px]" role="search">
-                    <span className="sr-only">Search plots by code or location</span>
-                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                    <input
-                        type="search"
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder="Search code or location"
-                        className="h-10 w-full rounded-full border border-input bg-card pl-9 pr-3.5 text-sm text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.10),0_1px_2px_-1px_rgba(0,0,0,0.10)] outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
-                    />
-                </label>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <WorkspaceSearch value={query} onChange={setQuery} label="Search plots by code or location" placeholder="Search code or location" className="sm:w-[233px]" />
+                    {isStaff && <Button asChild variant="outline" className="rounded-xl"><Link href="/garden-plots?view=manage">Manage plots</Link></Button>}
+                </div>
             )}
         >
             <div className="pb-9">
@@ -510,12 +505,8 @@ export function GardenPlotsWorkspace({ title, description }: { title: string; de
                 </section>
 
                 <section className="pt-[34px]" aria-labelledby="plot-directory-title">
-                    <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Plot directory</p>
-                            <h2 id="plot-directory-title" className="mt-[3px] text-xl font-[750] leading-7 tracking-[-0.025em] text-foreground">Find your growing space</h2>
-                        </div>
-
+                    <h2 id="plot-directory-title" className="sr-only">Find your growing space</h2>
+                    <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end sm:gap-6">
                         <div className="flex min-h-10 flex-wrap items-center gap-1 sm:justify-end" role="tablist" aria-label="Filter plots by status">
                             {statusOptions.map((option) => (
                                 <button
@@ -604,8 +595,10 @@ export function GardenPlotsWorkspace({ title, description }: { title: string; de
                                                         {requestSubmitted ? <CheckCircle2 className="size-4" aria-hidden="true" /> : <Sprout className="size-4" aria-hidden="true" />}
                                                         {requestSubmitted ? 'Requested' : 'Request plot'}
                                                     </button>
+                                                ) : isStaff ? (
+                                                    <Button asChild variant="outline" className="h-9 w-full rounded-[14px]"><Link href={`/garden-plots?view=manage&search=${encodeURIComponent(plot.plot_code)}`}>Manage plot<ArrowRight aria-hidden="true" /></Link></Button>
                                                 ) : (
-                                                    <span className="flex h-9 w-full items-center justify-end pr-0.5 text-xs font-medium text-muted-foreground">{isMember ? 'Not open' : 'Member requests only'}</span>
+                                                    <span className="flex h-9 w-full items-center justify-end pr-0.5 text-xs font-medium text-muted-foreground">Not open</span>
                                                 )}
                                             </div>
                                         </article>

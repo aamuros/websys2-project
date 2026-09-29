@@ -15,7 +15,8 @@ import {
     Sprout,
     UsersRound,
 } from 'lucide-react';
-import { useEffect, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { SettingsModal } from '@/components/settings-modal';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -57,9 +58,10 @@ const navItemClass = (active: boolean) => cn(
         : 'text-muted-foreground hover:bg-primary/[0.07] hover:text-foreground active:translate-x-px',
 );
 
-function AccountMenu() {
+function AccountMenu({ onOpenSettings }: { onOpenSettings: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const user = auth.user!;
+    const openingSettings = useRef(false);
 
     return (
         <DropdownMenu>
@@ -72,14 +74,17 @@ function AccountMenu() {
                     <ChevronDown className="size-4 shrink-0 stroke-[1.8] text-muted-foreground" />
                 </span>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" sideOffset={7} className="w-60 rounded-xl p-1.5">
+            <DropdownMenuContent align="start" sideOffset={7} className="w-60 rounded-xl p-1.5" onCloseAutoFocus={event => {
+                if (openingSettings.current) event.preventDefault();
+                openingSettings.current = false;
+            }}>
                 <DropdownMenuLabel className="px-2 py-2">
                     <span className="block truncate">{user.name}</span>
                     <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">{user.email}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="rounded-lg">
-                    <Link href="/settings"><Settings />Account settings</Link>
+                <DropdownMenuItem onSelect={() => { openingSettings.current = true; onOpenSettings(); }} className="rounded-lg">
+                    <Settings />Account settings
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-lg">
                     <Link href="/logout" method="post" as="button" className="w-full"><LogOut />Log out</Link>
@@ -89,7 +94,7 @@ function AccountMenu() {
     );
 }
 
-function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+function Navigation({ onNavigate, onOpenSettings }: { onNavigate?: () => void; onOpenSettings: () => void }) {
     const { auth } = usePage<SharedPageProps>().props;
     const role = auth.user!.role;
     const currentUrl = usePage().url.split('?')[0];
@@ -114,7 +119,12 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
             <div className="min-h-2 flex-1" />
 
             <div className="space-y-0.5 px-1 py-2">
-                {utilityItems.map(({ label, href, icon: Icon }) => (
+                {utilityItems.map(({ label, href, icon: Icon }) => href === '/settings' ? (
+                    <button key={href} type="button" onClick={onOpenSettings} className={cn(navItemClass(currentUrl === href), 'w-full')} aria-haspopup="dialog">
+                        <Icon className="size-4 shrink-0 stroke-[1.9]" />
+                        <span>{label}</span>
+                    </button>
+                ) : (
                     <Link key={href} href={href} onClick={onNavigate} className={navItemClass(currentUrl === href)} aria-current={currentUrl === href ? 'page' : undefined}>
                         <Icon className="size-4 shrink-0 stroke-[1.9]" />
                         <span>{label}</span>
@@ -131,12 +141,12 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     );
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ onNavigate, onOpenSettings }: { onNavigate?: () => void; onOpenSettings: () => void }) {
     const { notifications } = usePage<SharedPageProps>().props;
     return (
         <div className="flex h-full min-h-0 flex-col">
             <div className="flex h-[52px] shrink-0 items-center justify-between gap-1 px-3 py-2">
-                <AccountMenu />
+                <AccountMenu onOpenSettings={onOpenSettings} />
                 <DropdownMenu>
                     <DropdownMenuTrigger className="relative grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-primary/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" aria-label={`${notifications.unreadCount} unread notifications`}>
                         <Bell className="size-5 stroke-[1.8]" />
@@ -152,15 +162,29 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <Navigation onNavigate={onNavigate} />
+            <Navigation onNavigate={onNavigate} onOpenSettings={onOpenSettings} />
         </div>
     );
 }
 
 export function AppLayout({ title, description, actions, children }: PropsWithChildren<{ title: string; description: string; actions?: ReactNode }>) {
     const [mobileOpen, setMobileOpen] = useState(false);
-    const { flash } = usePage<SharedPageProps>().props;
+    const { url, props: { auth, flash } } = usePage<SharedPageProps>();
+    const isSettingsPage = url.split('?')[0] === '/settings';
+    const [settingsOpen, setSettingsOpen] = useState(isSettingsPage);
+    const settingsOpener = useRef<HTMLElement | null>(null);
     const [visibleFlash, setVisibleFlash] = useState(flash);
+
+    function openSettings() {
+        settingsOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setMobileOpen(false);
+        setSettingsOpen(true);
+    }
+
+    function closeSettings() {
+        setSettingsOpen(false);
+        if (isSettingsPage) router.get(`/${auth.user!.role}/dashboard`);
+    }
 
     useEffect(() => {
         setVisibleFlash(flash);
@@ -185,16 +209,16 @@ export function AppLayout({ title, description, actions, children }: PropsWithCh
                             <Menu className="size-5" />
                         </button>
                     </DialogTrigger>
-                    <DialogContent className="left-0 top-[52px] h-[calc(100dvh-52px)] w-[min(88vw,256px)] max-w-none translate-x-0 translate-y-0 rounded-none rounded-tr-3xl border-y-0 border-l-0 bg-background p-0 shadow-2xl" showCloseButton={false}>
+                    <DialogContent className="left-0 top-[52px] h-[calc(100dvh-52px)] w-[min(88vw,256px)] max-w-none translate-x-0 translate-y-0 rounded-none rounded-tr-3xl border-y-0 border-l-0 bg-background p-0 shadow-2xl" showCloseButton={false} onCloseAutoFocus={event => { if (settingsOpen) event.preventDefault(); }}>
                         <DialogTitle className="sr-only">Navigation</DialogTitle>
-                        <SidebarContent onNavigate={() => setMobileOpen(false)} />
+                        <SidebarContent onNavigate={() => setMobileOpen(false)} onOpenSettings={openSettings} />
                     </DialogContent>
                 </Dialog>
             </header>
 
             <div className="fixed inset-x-0 bottom-0 top-[52px] overflow-hidden rounded-t-3xl bg-background shadow-[0_-1px_0_rgba(255,255,255,0.04)]">
                 <aside className="absolute inset-y-0 left-0 z-30 hidden w-64 border-r border-border/60 bg-background lg:block">
-                    <SidebarContent />
+                    <SidebarContent onOpenSettings={openSettings} />
                 </aside>
 
                 <main className="app-scrollbar h-full overflow-y-auto overscroll-contain bg-background px-4 sm:px-6 lg:px-10 lg:pl-[296px]">
@@ -209,6 +233,10 @@ export function AppLayout({ title, description, actions, children }: PropsWithCh
                     <div className="mx-auto w-full max-w-[1151px] animate-rise-in">{children}</div>
                 </main>
             </div>
+            {settingsOpen && <SettingsModal onClose={closeSettings} onRestoreFocus={() => {
+                if (settingsOpener.current?.isConnected) settingsOpener.current.focus();
+                else document.querySelector<HTMLButtonElement>('button[aria-label="Open navigation"]')?.focus();
+            }} />}
         </div>
     );
 }

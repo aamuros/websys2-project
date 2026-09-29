@@ -14,7 +14,7 @@ class GardenPlotController extends Controller
 {
     public function index(Request $request): Response
     {
-        if ($request->user()->role->value === 'member') {
+        if ($request->user()->role->value === 'member' || $request->query('view') !== 'manage') {
             return Inertia::render('workspace-page', [
                 'page' => 'garden-plots',
                 'title' => 'Garden plots',

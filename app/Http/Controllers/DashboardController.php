@@ -22,7 +22,22 @@ class DashboardController extends Controller
 
     public function member(Request $request): Response
     {
-        return Inertia::render('member/dashboard', ['assignment' => PlotAssignment::with('gardenPlot')->where('user_id', $request->user()->id)->where('status', 'active')->first(), 'requests' => PlotRequest::with('gardenPlot')->where('user_id', $request->user()->id)->latest()->limit(5)->get(), 'events' => CalendarEvent::where('status', 'published')->where('ends_at', '>=', now())->orderBy('starts_at')->limit(3)->get(), 'updates' => CommunityUpdate::where('status', 'published')->latest('published_at')->limit(3)->get()]);
+        return Inertia::render('member/dashboard', [
+            'assignment' => $request->user()->plotAssignments()
+                ->with('gardenPlot:id,plot_code,location')
+                ->where('status', 'active')->latest('start_date')->latest('id')
+                ->first(['id', 'garden_plot_id', 'start_date']),
+            'requests' => $request->user()->plotRequests()
+                ->with('gardenPlot:id,plot_code,location')
+                ->latest()->latest('id')->limit(5)
+                ->get(['id', 'garden_plot_id', 'status', 'created_at']),
+            'events' => CalendarEvent::where('status', 'published')
+                ->where('ends_at', '>=', now())->orderBy('starts_at')->orderBy('id')->limit(3)
+                ->get(['id', 'title', 'location', 'starts_at', 'ends_at']),
+            'updates' => CommunityUpdate::where('status', 'published')
+                ->latest('published_at')->latest('id')->limit(3)
+                ->get(['id', 'title', 'body', 'published_at']),
+        ]);
     }
 
     public function staff(): Response

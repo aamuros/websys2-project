@@ -71,6 +71,69 @@ class CropPlantingTest extends TestCase
         $this->assertDatabaseCount('plantings', 0);
     }
 
+    public function test_filtered_assignment_history_keeps_the_members_current_plot_visible(): void
+    {
+        $member = User::factory()->create(['role' => UserRole::Member]);
+        $otherMember = User::factory()->create(['role' => UserRole::Member]);
+        $active = $this->assignment($member);
+        $past = $this->assignment($member, 'A-02');
+        $past->update(['status' => 'ended', 'end_date' => '2026-09-23']);
+        $otherPast = $this->assignment($otherMember, 'B-01');
+        $otherPast->update(['status' => 'ended', 'end_date' => '2026-09-23']);
+        $this->assignment($otherMember, 'B-02');
+        $crop = Crop::create(['name' => 'Tomato', 'type' => 'fruit']);
+        $active->plantings()->create(['crop_id' => $crop->id, 'planted_at' => '2026-09-23']);
+
+        $this->actingAs($member)
+            ->get('/assignments?status=ended&search=North')
+            ->assertInertia(fn ($page) => $page
+                ->component('assignments')
+                ->has('assignments.data', 1)
+                ->where('assignments.data.0.id', $past->id)
+                ->where('activeAssignment.id', $active->id)
+                ->where('activeAssignment.garden_plot.size', fn ($size) => (float) $size === 12.0)
+                ->has('activeAssignment.plantings', 1)
+                ->where('activeAssignment.plantings.0.crop.name', 'Tomato')
+                ->where('today', now()->toDateString()));
+
+        $this->get('/assignments?search=South')
+            ->assertInertia(fn ($page) => $page
+                ->has('assignments.data', 0)
+                ->where('activeAssignment.id', $active->id));
+    }
+
+    public function test_member_without_an_active_plot_does_not_receive_another_members_assignment(): void
+    {
+        $member = User::factory()->create(['role' => UserRole::Member]);
+        $otherMember = User::factory()->create(['role' => UserRole::Member]);
+        $this->assignment($otherMember);
+
+        $this->actingAs($member)->get('/assignments')
+            ->assertInertia(fn ($page) => $page
+                ->where('activeAssignment', null)
+                ->has('assignments.data', 0));
+    }
+
+    public function test_planting_dates_must_be_within_the_assignment_start_and_today(): void
+    {
+        $this->travelTo(now()->setDate(2026, 9, 28)->startOfDay());
+        $member = User::factory()->create(['role' => UserRole::Member]);
+        $assignment = $this->assignment($member);
+        $crop = Crop::create(['name' => 'Basil', 'type' => 'herb']);
+
+        foreach (['2026-08-31', '2026-09-29'] as $date) {
+            $this->actingAs($member)
+                ->post("/assignments/{$assignment->id}/plantings", ['crop_id' => $crop->id, 'planted_at' => $date])
+                ->assertSessionHasErrors('planted_at');
+        }
+
+        $this->assertDatabaseCount('plantings', 0);
+        $this->post("/assignments/{$assignment->id}/plantings", ['crop_id' => $crop->id, 'planted_at' => '2026-09-01'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+        $this->assertDatabaseCount('plantings', 1);
+    }
+
     private function assignment(User $member, string $plotCode = 'A-01'): PlotAssignment
     {
         $plot = GardenPlot::create(['plot_code' => $plotCode, 'location' => 'North', 'size' => 12, 'status' => GardenPlotStatus::Occupied]);

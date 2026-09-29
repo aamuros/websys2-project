@@ -15,7 +15,9 @@ class CommunityUpdateController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = CommunityUpdate::with('creator:id,name')->latest('published_at');
+        $sort = $request->input('sort') === 'oldest' ? 'oldest' : 'newest';
+        $direction = $sort === 'oldest' ? 'asc' : 'desc';
+        $query = CommunityUpdate::with('creator:id,name')->orderBy('published_at', $direction)->orderBy('id', $direction);
         if ($request->user()->role->value === 'member') {
             $query->where('status', 'published');
         }
@@ -26,7 +28,7 @@ class CommunityUpdateController extends Controller
             $query->where('status', $request->string('status'));
         }
 
-        return Inertia::render('community-updates', ['updates' => $query->paginate(8)->withQueryString(), 'filters' => $request->only('search', 'status')]);
+        return Inertia::render('community-updates', ['updates' => $query->paginate(8)->withQueryString(), 'filters' => [...$request->only('search', 'status'), 'sort' => $sort]]);
     }
 
     public function store(Request $request): RedirectResponse
