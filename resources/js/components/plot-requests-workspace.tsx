@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { RequestBadge, requestStatusDetails as statusDetails, type RequestStatus } from '@/components/plot-request-status';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PlotMarker, WorkspacePanel, WorkspaceStatusTabs } from '@/components/workspace-ui';
 import { WorkspaceSearch } from '@/components/workspace-search';
 import { AppLayout } from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
@@ -87,7 +88,7 @@ function RequestProgress({ request }: { request: PlotRequest }) {
 
 function EmptyRequests() {
     return (
-        <section className="grid min-h-[430px] place-items-center border-y border-border px-5 py-16 text-center" aria-labelledby="empty-requests-title">
+        <section className="grid min-h-72 place-items-center rounded-2xl border border-dashed border-border bg-card/55 px-5 py-12 text-center" aria-labelledby="empty-requests-title">
             <div className="max-w-md">
                 <span className="mx-auto grid size-14 place-items-center rounded-full bg-primary/[0.08] text-primary">
                     <Sprout className="size-6" aria-hidden="true" />
@@ -170,80 +171,41 @@ export function PlotRequestsWorkspace({
                 </div>
             )}
         >
-            <div className="space-y-9 pb-12 sm:space-y-12">
+            <div className="space-y-6 pb-9">
                 {currentRequest && (
-                    <>
-                        <section className="overflow-hidden rounded-[22px] bg-primary text-primary-foreground shadow-[0_12px_36px_rgba(64,79,29,0.14)]" aria-labelledby="current-request-title">
-                            <div className="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-                                <div className="p-6 sm:p-8">
-                                    <RequestBadge status={currentRequest.status} />
-                                    <h2 id="current-request-title" className="mt-5 text-3xl font-[760] tracking-[-0.035em] sm:text-4xl">{plotName(currentRequest)}</h2>
-                                    <p className="mt-3 max-w-xl text-sm leading-6 text-primary-foreground/70">{statusDetails[currentRequest.status].summary}</p>
-                                    <Button variant="outline" size="sm" className="mt-5 rounded-xl border-white/20 bg-white/10 text-primary-foreground hover:bg-white/20 hover:text-primary-foreground" onClick={() => { setSelectedId(currentRequest.id); setConfirmCancel(false); cancelForm.clearErrors(); }}>View details<Eye aria-hidden="true" /></Button>
+                    <WorkspacePanel className="bg-[#fbf8f2] shadow-none">
+                        <section aria-labelledby="current-request-title">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 bg-card/80 px-5 py-4 sm:px-6">
+                                <div className="flex items-center gap-3">
+                                    <PlotMarker code={currentRequest.plot?.plot_code ?? '—'} />
+                                    <div>
+                                        <h2 id="current-request-title" className="text-lg font-[750] tracking-[-0.02em]">{plotName(currentRequest)}</h2>
+                                        <p className="mt-0.5 text-xs text-muted-foreground">Request #{currentRequest.id} · Current request</p>
+                                    </div>
                                 </div>
-                                <dl className="grid grid-cols-2 border-t border-white/10 bg-black/[0.06] lg:border-l lg:border-t-0">
-                                    <div className="flex min-h-28 flex-col justify-center border-r border-white/10 px-5 py-5">
-                                        <MapPin className="size-4 text-primary-foreground/55" aria-hidden="true" />
-                                        <dt className="mt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground/55">Location</dt>
-                                        <dd className="mt-1 text-sm font-semibold">{currentRequest.plot?.location ?? 'Unavailable'}</dd>
-                                    </div>
-                                    <div className="flex min-h-28 flex-col justify-center px-5 py-5">
-                                        <Ruler className="size-4 text-primary-foreground/55" aria-hidden="true" />
-                                        <dt className="mt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground/55">Plot size</dt>
-                                        <dd className="mt-1 text-sm font-semibold">{currentRequest.plot ? `${currentRequest.plot.size.toFixed(2)} m²` : 'Unavailable'}</dd>
-                                    </div>
-                                    <div className="col-span-2 border-t border-white/10 px-5 py-4">
-                                        <dt className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-foreground/55"><CalendarClock className="size-3.5" aria-hidden="true" />Submitted</dt>
-                                        <dd className="mt-1.5 text-sm font-semibold">{formatDate(currentRequest.submitted_at, true)}</dd>
-                                    </div>
+                                <div className="flex items-center gap-3">
+                                    <RequestBadge status={currentRequest.status} />
+                                    <Button variant="outline" size="sm" className="rounded-[10px]" onClick={() => { setSelectedId(currentRequest.id); setConfirmCancel(false); cancelForm.clearErrors(); }}>View details<Eye aria-hidden="true" /></Button>
+                                </div>
+                            </div>
+                            <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+                                <p className="max-w-sm text-sm leading-6 text-muted-foreground">{statusDetails[currentRequest.status].summary}</p>
+                                <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                                    <div><dt className="flex items-center gap-1.5 text-xs text-muted-foreground"><MapPin className="size-3.5" aria-hidden="true" />Location</dt><dd className="mt-1.5 text-sm font-semibold">{currentRequest.plot?.location ?? 'Unavailable'}</dd></div>
+                                    <div><dt className="flex items-center gap-1.5 text-xs text-muted-foreground"><Ruler className="size-3.5" aria-hidden="true" />Plot size</dt><dd className="mt-1.5 text-sm font-semibold">{currentRequest.plot ? `${currentRequest.plot.size.toFixed(2)} m²` : 'Unavailable'}</dd></div>
+                                    <div><dt className="flex items-center gap-1.5 text-xs text-muted-foreground"><CalendarClock className="size-3.5" aria-hidden="true" />Submitted</dt><dd className="mt-1.5 text-sm font-semibold">{formatDate(currentRequest.submitted_at)}</dd></div>
                                 </dl>
                             </div>
+                            <section className="border-t border-border/70 px-5 py-5 sm:px-6" aria-label="Review timeline"><RequestProgress request={currentRequest} /></section>
                         </section>
-
-                        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(260px,0.7fr)] lg:gap-14">
-                            <div className="space-y-9">
-                                <section aria-labelledby="review-progress-title">
-                                    <h2 id="review-progress-title" className="sr-only">Review timeline</h2>
-                                    <div className="py-6"><RequestProgress request={currentRequest} /></div>
-                                </section>
-                                <section className="border-y border-border py-6" aria-labelledby="current-request-note-title">
-                                    <div className="flex gap-4">
-                                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/[0.08] text-primary"><ClipboardCheck className="size-4" aria-hidden="true" /></span>
-                                        <div>
-                                            <h2 id="current-request-note-title" className="font-bold text-foreground">Your growing plan</h2>
-                                            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{currentRequest.notes || 'No growing notes were included with this request.'}</p>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                            <aside className="border-l-2 border-primary/20 pl-5" aria-labelledby="what-happens-next-title">
-                                <h2 id="what-happens-next-title" className="sr-only">What happens next</h2>
-                                <p className="text-sm leading-6 text-muted-foreground">Staff review plot availability and your growing plan. A decision will appear here once the review is complete.</p>
-                                <Link href="/help" className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline-offset-4 transition-[gap] hover:gap-2.5 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">Read request guidance<ArrowRight className="size-4" aria-hidden="true" /></Link>
-                            </aside>
-                        </div>
-                    </>
+                    </WorkspacePanel>
                 )}
 
                 <section aria-labelledby="request-history-title">
                     <h2 id="request-history-title" className="sr-only">Request history</h2>
-                    <div className="mb-[18px] flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-end">
-                        <div className="flex min-h-10 flex-wrap items-center gap-1" role="group" aria-label="Filter requests by status">
-                            {filterOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    aria-pressed={status === option.value}
-                                    onClick={() => setStatus(option.value)}
-                                    className={cn(
-                                        'h-9 whitespace-nowrap rounded-full px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-primary/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-                                        status === option.value && 'bg-primary/[0.09] font-semibold text-foreground',
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <WorkspaceStatusTabs value={status} options={filterOptions.map((option) => ({ ...option, count: option.value === 'all' ? requests.length : requests.filter((request) => request.status === option.value).length }))} onChange={setStatus} label="Filter requests by status" />
+                        <p className="text-xs tabular-nums text-muted-foreground">{filteredRequests.length} {filteredRequests.length === 1 ? 'request' : 'requests'}</p>
                     </div>
 
                     <p className="sr-only" aria-live="polite">{filteredRequests.length} {filteredRequests.length === 1 ? 'request' : 'requests'} shown</p>
@@ -257,25 +219,28 @@ export function PlotRequestsWorkspace({
                             </div>
                         </div>
                     ) : (
-                        <div>
-                            <ul className="divide-y divide-border border-y border-border">
+                        <WorkspacePanel className="bg-[#fbf8f2] shadow-none">
+                            <div className="hidden grid-cols-[minmax(0,1fr)_150px_120px_76px] gap-4 border-b border-border/70 bg-card/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.075em] text-muted-foreground sm:grid sm:px-6" aria-hidden="true"><span>Garden plot</span><span>Submitted</span><span>Status</span><span className="text-right">Details</span></div>
+                            <ul className="divide-y divide-border/60">
                                 {filteredRequests.map((request) => (
-                                    <li key={request.id} className="grid gap-4 px-1 py-5 transition-colors hover:bg-primary/[0.025] sm:grid-cols-[minmax(0,1fr)_150px_auto_auto] sm:items-center sm:px-2">
-                                        <div className="min-w-0">
+                                    <li key={request.id} className="grid gap-3 px-5 py-4 transition-colors hover:bg-primary/[0.032] sm:grid-cols-[minmax(0,1fr)_150px_120px_76px] sm:items-center sm:gap-4 sm:px-6">
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <PlotMarker code={request.plot?.plot_code ?? '—'} />
+                                            <div className="min-w-0">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <p className="font-bold text-foreground">{plotName(request)}</p>
                                                 {request.id === currentRequest?.id && <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Current</span>}
                                             </div>
                                             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"><MapPin className="size-3.5" aria-hidden="true" />{request.plot?.location ?? 'Plot no longer listed'}</p>
+                                            </div>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">Submitted {formatDate(request.submitted_at)}</p>
-                                        <div className="sm:justify-self-end"><RequestBadge status={request.status} /></div>
+                                        <p className="text-xs text-muted-foreground"><span className="sm:sr-only">Submitted </span>{formatDate(request.submitted_at)}</p>
+                                        <div><RequestBadge status={request.status} /></div>
                                         <Button variant="outline" size="sm" className="justify-self-start rounded-xl sm:justify-self-end" aria-label={`View request #${request.id} for ${plotName(request)}`} onClick={() => { setSelectedId(request.id); setConfirmCancel(false); cancelForm.clearErrors(); }}>View<Eye aria-hidden="true" /></Button>
                                     </li>
                                 ))}
                             </ul>
-                            <p className="py-3 text-xs text-muted-foreground">Showing {filteredRequests.length} of {requests.length} {requests.length === 1 ? 'request' : 'requests'}</p>
-                        </div>
+                        </WorkspacePanel>
                     )}
                 </section>
 

@@ -25,6 +25,27 @@ export function WorkspacePanel({ children, className }: PropsWithChildren<{ clas
     return <div className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgba(64,79,29,0.05)]', className)}>{children}</div>;
 }
 
+export function WorkspaceStatusTabs<Value extends string>({ value, options, onChange, label }: {
+    value: Value;
+    options: ReadonlyArray<{ value: Value; label: string; count?: number }>;
+    onChange: (value: Value) => void;
+    label: string;
+}) {
+    return <div className="flex max-w-full flex-wrap items-center gap-1" role="group" aria-label={label}>
+        {options.map((option) => <button key={option.value} type="button" aria-pressed={value === option.value} onClick={() => onChange(option.value)} className={cn('inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-[10px] px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-primary/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50', value === option.value && 'bg-primary/[0.09] font-semibold text-foreground')}>
+            {option.label}
+            {option.count !== undefined && <span className={cn('text-[11px] tabular-nums text-muted-foreground', value === option.value && 'text-primary')}>{option.count}</span>}
+        </button>)}
+    </div>;
+}
+
+export function PlotMarker({ code, className }: { code: string; className?: string }) {
+    return <span aria-hidden="true" className={cn('relative grid size-10 shrink-0 place-items-center rounded-xl border border-primary/[0.08] bg-primary/[0.07] text-[11px] font-bold tracking-[0.02em] text-primary', className)}>
+        {code.replace('-', '')}
+        <span className="pointer-events-none absolute inset-2 rounded border border-primary/15" />
+    </span>;
+}
+
 export function Toolbar({ path, search = '', filters, actionLabel, onAction }: { path: string; search?: string; filters?: ReactNode; actionLabel?: string; onAction?: () => void }) {
     const { url } = usePage();
     const [value, setValue] = useState(search);

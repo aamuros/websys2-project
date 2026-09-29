@@ -6,7 +6,7 @@ import { PlantingCalendar } from '@/components/planting-calendar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination, type Paginated } from '@/components/workspace-ui';
+import { Pagination, PlotMarker, WorkspaceStatusTabs, type Paginated } from '@/components/workspace-ui';
 import { WorkspaceSearch } from '@/components/workspace-search';
 import { AppLayout } from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
@@ -23,8 +23,8 @@ export type MemberAssignment = {
     plantings?: Planting[];
 };
 
-const panelClass = 'overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgba(64,79,29,0.05)]';
-const eyebrowClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground';
+const panelClass = 'overflow-hidden rounded-2xl border border-border bg-[#fbf8f2]';
+const eyebrowClass = 'text-xs text-muted-foreground';
 const statusOptions: Array<{ value: '' | AssignmentStatus; label: string }> = [
     { value: '', label: 'All assignments' },
     { value: 'active', label: 'Active' },
@@ -59,12 +59,12 @@ function PlantingsTable({ plantings }: { plantings: Planting[] }) {
     return (
         <Table>
             <caption className="sr-only">Recorded crops and planting dates</caption>
-            <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Crop</TableHead><TableHead>Type</TableHead><TableHead>Planted</TableHead></TableRow></TableHeader>
+            <TableHeader className="bg-card/80"><TableRow className="hover:bg-transparent"><TableHead className="h-10 px-5 text-[10px] sm:px-6">Crop</TableHead><TableHead className="h-10 text-[10px]">Type</TableHead><TableHead className="h-10 text-[10px]">Planted</TableHead></TableRow></TableHeader>
             <TableBody>{sortedPlantings.map((planting) => (
-                <TableRow key={planting.id}>
-                    <TableCell><div className="flex items-center gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/[0.055] [&_svg]:text-primary"><CropTypeIcon type={planting.crop.type} /></span><span className="font-bold">{planting.crop.name}</span></div></TableCell>
-                    <TableCell className="capitalize text-muted-foreground">{planting.crop.type}</TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">{dateLabel(planting.planted_at)}</TableCell>
+                <TableRow key={planting.id} className="border-border/60 hover:bg-primary/[0.032]">
+                    <TableCell className="px-5 py-3 sm:px-6"><div className="flex items-center gap-3"><span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-primary/[0.055] [&_svg]:size-4 [&_svg]:text-primary"><CropTypeIcon type={planting.crop.type} /></span><span className="font-semibold">{planting.crop.name}</span></div></TableCell>
+                    <TableCell className="py-3 text-xs capitalize text-muted-foreground">{planting.crop.type}</TableCell>
+                    <TableCell className="whitespace-nowrap py-3 text-xs text-muted-foreground">{dateLabel(planting.planted_at)}</TableCell>
                 </TableRow>
             ))}</TableBody>
         </Table>
@@ -121,23 +121,28 @@ export function MemberAssignmentsWorkspace({ assignments, activeAssignment, crop
             title="My assignments"
             description="View your current plot, record plantings, and review past assignments."
             actions={(
-                <div className="flex flex-col gap-2 sm:flex-row">
-                    <Button asChild variant="outline" className="rounded-xl"><Link href="/garden-calendar"><CalendarDays aria-hidden="true" />Garden calendar</Link></Button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <WorkspaceSearch value={query} onChange={setQuery} label="Search assignments by plot or location" placeholder="Search assignments" onSubmit={() => filterHistory()} onClear={() => filterHistory(filters.status ?? '', '')} className="sm:w-[233px]" />
                     {activeAssignment ? <Button className="rounded-xl" disabled={!canPlant} onClick={openPlanting}><Sprout aria-hidden="true" />Add planting</Button> : <Button asChild className="rounded-xl"><Link href="/garden-plots"><Sprout aria-hidden="true" />Browse plots</Link></Button>}
                 </div>
             )}
         >
-            <div className="space-y-8 pb-9">
+            <div className="space-y-6 pb-9">
                 <section aria-labelledby="current-assignment-title">
                     <h2 id="current-assignment-title" className="sr-only">Current assignment</h2>
                     {activeAssignment ? (
                         <div className={panelClass}>
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary/[0.055] p-5">
-                                <div className="flex items-center gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/[0.08] text-primary"><Sprout className="size-5" aria-hidden="true" /></span><h3 className="text-lg font-bold tracking-[-0.02em]">Plot {activeAssignment.garden_plot.plot_code}</h3></div>
-                                <AssignmentBadge status={activeAssignment.status} />
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 bg-card/80 px-5 py-4 sm:px-6">
+                                <div className="flex items-center gap-3"><PlotMarker code={activeAssignment.garden_plot.plot_code} /><div><h3 className="text-lg font-[750] tracking-[-0.02em]">Plot {activeAssignment.garden_plot.plot_code}</h3><p className="mt-0.5 text-xs text-muted-foreground">Your current assignment</p></div></div>
+                                <div className="flex items-center gap-3"><AssignmentBadge status={activeAssignment.status} /><Button asChild variant="outline" size="sm" className="rounded-[10px]"><Link href="/garden-calendar"><CalendarDays aria-hidden="true" />Calendar</Link></Button></div>
                             </div>
-                            <div className="p-5"><AssignmentFacts assignment={activeAssignment} /></div>
+                            <div className="p-5 sm:p-6"><AssignmentFacts assignment={activeAssignment} /></div>
                             {!canPlant && <p className="border-t border-border px-5 py-4 text-sm text-muted-foreground">{activeAssignment.start_date.slice(0, 10) > today ? `You can record plantings from ${dateLabel(activeAssignment.start_date)}.` : 'Garden staff have not added any crops yet. Planting records will be available once crops are added.'}</p>}
+                            <section aria-labelledby="planting-record-title" className="border-t border-border/70">
+                                <h2 id="planting-record-title" className="sr-only">Planting record</h2>
+                                <p className="px-5 py-3 text-xs text-muted-foreground sm:px-6">{activeAssignment.plantings?.length ?? 0} {(activeAssignment.plantings?.length ?? 0) === 1 ? 'planting' : 'plantings'} recorded</p>
+                                <PlantingsTable plantings={activeAssignment.plantings ?? []} />
+                            </section>
                         </div>
                     ) : (
                         <div className="flex flex-col items-start gap-4 rounded-2xl border border-dashed border-border bg-card/55 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -147,38 +152,27 @@ export function MemberAssignmentsWorkspace({ assignments, activeAssignment, crop
                     )}
                 </section>
 
-                {activeAssignment && (
-                    <section aria-labelledby="planting-record-title">
-                        <h2 id="planting-record-title" className="sr-only">Planting record</h2>
-                        <p className="mb-[18px] text-sm text-muted-foreground">{activeAssignment.plantings?.length ?? 0} plantings recorded</p>
-                        <div className={panelClass}><PlantingsTable plantings={activeAssignment.plantings ?? []} /></div>
-                    </section>
-                )}
-
                 <section aria-labelledby="assignment-history-title">
                     <h2 id="assignment-history-title" className="sr-only">Assignment history</h2>
-                    <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
-                        <WorkspaceSearch value={query} onChange={setQuery} label="Search assignments by plot or location" placeholder="Search code or location" onSubmit={() => filterHistory()} onClear={() => filterHistory(filters.status ?? '', '')} className="sm:w-[233px]" />
-                    </div>
-                    <div className="mb-4 flex flex-wrap items-center gap-1" role="group" aria-label="Filter assignments by status">
-                        {statusOptions.map((option) => <button key={option.value} type="button" aria-pressed={(filters.status ?? '') === option.value} onClick={() => filterHistory(option.value)} className={cn('h-9 whitespace-nowrap rounded-full px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-primary/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50', (filters.status ?? '') === option.value && 'bg-primary/[0.09] font-semibold text-foreground')}>{option.label}</button>)}
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <WorkspaceStatusTabs value={filters.status ?? ''} options={statusOptions} onChange={(status) => filterHistory(status)} label="Filter assignments by status" />
+                        <p className="text-xs tabular-nums text-muted-foreground">{assignments.total} {assignments.total === 1 ? 'assignment' : 'assignments'}</p>
                     </div>
                     {assignments.data.length ? (
                         <div className={panelClass}>
                             <Table>
-                                <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Garden plot</TableHead><TableHead>Started</TableHead><TableHead>End date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Details</TableHead></TableRow></TableHeader>
+                                <TableHeader className="bg-card/80"><TableRow className="hover:bg-transparent"><TableHead className="h-10 px-5 text-[10px] sm:px-6">Garden plot</TableHead><TableHead className="h-10 text-[10px]">Started</TableHead><TableHead className="h-10 text-[10px]">End date</TableHead><TableHead className="h-10 text-[10px]">Status</TableHead><TableHead className="h-10 px-5 text-right text-[10px] sm:px-6">Details</TableHead></TableRow></TableHeader>
                                 <TableBody>{assignments.data.map((assignment) => (
-                                    <TableRow key={assignment.id}>
-                                        <TableCell className="min-w-40"><p className="font-bold">Plot {assignment.garden_plot.plot_code}</p><p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"><MapPin className="size-3.5 shrink-0" aria-hidden="true" />{assignment.garden_plot.location}</p></TableCell>
-                                        <TableCell className="whitespace-nowrap text-muted-foreground">{dateLabel(assignment.start_date)}</TableCell>
-                                        <TableCell className="whitespace-nowrap text-muted-foreground">{assignment.end_date ? dateLabel(assignment.end_date) : 'No end date set'}</TableCell>
+                                    <TableRow key={assignment.id} className="border-border/60 hover:bg-primary/[0.032]">
+                                        <TableCell className="min-w-48 px-5 sm:px-6"><div className="flex items-center gap-3"><PlotMarker code={assignment.garden_plot.plot_code} /><div><p className="font-semibold">Plot {assignment.garden_plot.plot_code}</p><p className="mt-0.5 text-xs text-muted-foreground">{assignment.garden_plot.location}</p></div></div></TableCell>
+                                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{dateLabel(assignment.start_date)}</TableCell>
+                                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{assignment.end_date ? dateLabel(assignment.end_date) : 'Ongoing'}</TableCell>
                                         <TableCell className="whitespace-nowrap"><AssignmentBadge status={assignment.status} /></TableCell>
-                                        <TableCell className="text-right"><Button size="sm" variant="outline" className="rounded-xl" aria-label={`View assignment #${assignment.id} for plot ${assignment.garden_plot.plot_code}`} onClick={() => setSelectedAssignment(assignment)}>View<Eye aria-hidden="true" /></Button></TableCell>
+                                        <TableCell className="px-5 text-right sm:px-6"><Button size="sm" variant="outline" className="rounded-[10px]" aria-label={`View assignment #${assignment.id} for plot ${assignment.garden_plot.plot_code}`} onClick={() => setSelectedAssignment(assignment)}>View<Eye aria-hidden="true" /></Button></TableCell>
                                     </TableRow>
                                 ))}</TableBody>
                             </Table>
                             <Pagination page={assignments} />
-                            {assignments.last_page <= 1 && <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">{assignments.total} {assignments.total === 1 ? 'assignment' : 'assignments'}</p>}
                         </div>
                     ) : (
                         <div className="rounded-2xl border border-dashed border-border bg-card/55 px-5 py-9 text-center">
