@@ -1,0 +1,164 @@
+[
+  {
+    "id": "B01",
+    "section": "Validation",
+    "input": "Blank email and password",
+    "expected": "Required-field errors",
+    "actual": "Both required-field errors displayed",
+    "status": "PASS",
+    "evidence": "01-empty-login.png"
+  },
+  {
+    "id": "B02",
+    "section": "Validation",
+    "input": "abc",
+    "expected": "Invalid-email error",
+    "actual": "Invalid-email message displayed",
+    "status": "PASS",
+    "evidence": "02-invalid-email.png"
+  },
+  {
+    "id": "B03",
+    "section": "Authentication",
+    "input": "Member email with incorrect password",
+    "expected": "Login denied",
+    "actual": "Credential error; remains on login page",
+    "status": "PASS",
+    "evidence": "03-invalid-credentials.png"
+  },
+  {
+    "id": "B04",
+    "section": "SQL injection",
+    "input": "Password: ' OR 1=1 --",
+    "expected": "No login bypass",
+    "actual": "Credential error and unauthenticated login page",
+    "status": "PASS",
+    "evidence": "04-sql-login-denied.png"
+  },
+  {
+    "id": "B05",
+    "section": "Authentication",
+    "input": "Valid development member credentials",
+    "expected": "Member dashboard",
+    "actual": "Member dashboard loaded",
+    "status": "PASS",
+    "evidence": "05-member-login-success.png"
+  },
+  {
+    "id": "B06",
+    "section": "Authorization",
+    "input": "Member requests /members directly",
+    "expected": "HTTP 403",
+    "actual": "HTTP 403 access restriction",
+    "status": "PASS",
+    "evidence": "06-member-access-denied.png"
+  },
+  {
+    "id": "B07",
+    "section": "Interface",
+    "input": "Member dashboard at 390 x 844",
+    "expected": "Fits viewport with mobile navigation",
+    "actual": "No horizontal overflow",
+    "status": "PASS",
+    "evidence": "07-mobile-dashboard.png"
+  },
+  {
+    "id": "B08",
+    "section": "Authentication",
+    "input": "Logout then GET /member/dashboard",
+    "expected": "Redirect to login",
+    "actual": "Final URL /login; login form displayed",
+    "status": "PASS",
+    "evidence": "08-logout-protected-page.png"
+  },
+  {
+    "id": "B09",
+    "section": "XSS",
+    "input": "<script>window.__phase4Xss=1</script>\n<img src=x onerror=\"window.__phase4Xss=2\">\n<svg onload=\"window.__phase4Xss=3\"></svg>",
+    "expected": "Persisted text; no executable DOM or script execution",
+    "actual": "All three payloads display as literal text to a different user; sentinel remains 0",
+    "status": "PASS",
+    "evidence": "09-stored-xss-as-text.png"
+  },
+  {
+    "id": "B10",
+    "section": "XSS",
+    "input": "<svg onload=\"window.__phase4Xss=4\">",
+    "expected": "Search field treats payload as text",
+    "actual": "Literal field value; no SVG handler; sentinel 0",
+    "status": "PASS",
+    "evidence": "10-reflected-xss-as-text.png"
+  },
+  {
+    "id": "B11",
+    "section": "Functional",
+    "input": "Staff creates P4-EVIDENCE, 12.5 square meters, then searches code",
+    "expected": "Record persists; exactly one matching result",
+    "actual": "New record visible after full reload and filtered search",
+    "status": "PASS",
+    "evidence": "11-add-plot-and-search.png"
+  },
+  {
+    "id": "B12",
+    "section": "SQL injection",
+    "input": "' OR 1=1 --",
+    "expected": "Literal search; no extra rows or SQL error",
+    "actual": "Empty result with normal HTTP 200 page",
+    "status": "PASS",
+    "evidence": "12-sql-search-empty.png"
+  },
+  {
+    "id": "B13",
+    "section": "Authorization",
+    "input": "Admin opens /members",
+    "expected": "Admin-only roster accessible",
+    "actual": "Member administration page displayed",
+    "status": "PASS",
+    "evidence": "13-admin-members-allowed.png"
+  },
+  {
+    "id": "B14",
+    "section": "Functional",
+    "input": "Admin views reports and requests September CSV export",
+    "expected": "Report displayed and valid CSV returned",
+    "actual": "Report visible; HTTP 200 text/csv with expected header",
+    "status": "PASS",
+    "evidence": "14-report-and-export.png"
+  },
+  {
+    "id": "B15",
+    "section": "Authentication",
+    "input": "Authenticated PUT /settings/profile without CSRF token",
+    "expected": "HTTP 419; no profile change",
+    "actual": "HTTP 419 request rejected",
+    "status": "PASS",
+    "evidence": "browser-features.txt"
+  },
+  {
+    "id": "B16",
+    "section": "Authentication",
+    "input": "Inspect test session cookie attributes",
+    "expected": "HttpOnly and SameSite=Lax",
+    "actual": "Both flags present; cookie values omitted from evidence",
+    "status": "PASS",
+    "evidence": "browser-features.txt"
+  },
+  {
+    "id": "B17",
+    "section": "Validation",
+    "input": "Registration name A; valid remaining fields; native constraints bypassed by harness",
+    "expected": "Server rejects name shorter than 2 characters",
+    "actual": "Server name-length error displayed",
+    "status": "PASS",
+    "evidence": "17-name-validation-fixed.png"
+  },
+  {
+    "id": "B18",
+    "section": "Interface",
+    "input": "Open member navigation at 390 x 844",
+    "expected": "Visible role-appropriate mobile menu",
+    "actual": "Member links visible; no horizontal overflow",
+    "status": "PASS",
+    "evidence": "18-mobile-navigation.png"
+  }
+]
