@@ -1,0 +1,108 @@
+### Result
+[{"id":"B09","section":"XSS","input":"<script>window.__phase4Xss=1</script>\n<img src=x onerror=\"window.__phase4Xss=2\">\n<svg onload=\"window.__phase4Xss=3\"></svg>","expected":"Persisted text; no executable DOM or script execution","actual":"All three payloads display as literal text to a different user; sentinel remains 0","status":"PASS","evidence":"09-stored-xss-as-text.png"},{"id":"B10","section":"XSS","input":"<svg onload=\"window.__phase4Xss=4\">","expected":"Search field treats payload as text","actual":"Literal field value; no SVG handler; sentinel 0","status":"PASS","evidence":"10-reflected-xss-as-text.png"},{"id":"B11","section":"Functional","input":"Staff creates P4-EVIDENCE, 12.5 square meters, then searches code","expected":"Record persists; exactly one matching result","actual":"New record visible after full reload and filtered search","status":"PASS","evidence":"11-add-plot-and-search.png"},{"id":"B12","section":"SQL injection","input":"' OR 1=1 --","expected":"Literal search; no extra rows or SQL error","actual":"Empty result with normal HTTP 200 page","status":"PASS","evidence":"12-sql-search-empty.png"},{"id":"B13","section":"Authorization","input":"Admin opens /members","expected":"Admin-only roster accessible","actual":"Member administration page displayed","status":"PASS","evidence":"13-admin-members-allowed.png"},{"id":"B14","section":"Functional","input":"Admin views reports and requests September CSV export","expected":"Report displayed and valid CSV returned","actual":"Report visible; HTTP 200 text/csv with expected header","status":"PASS","evidence":"14-report-and-export.png"},{"id":"B15","section":"Authentication","input":"Authenticated PUT /settings/profile without CSRF token","expected":"HTTP 419; no profile change","actual":"HTTP 419 request rejected","status":"PASS","evidence":"browser-features.txt"},{"id":"B16","section":"Authentication","input":"Inspect test session cookie attributes","expected":"HttpOnly and SameSite=Lax","actual":"Both flags present; cookie values omitted from evidence","status":"PASS","evidence":"browser-features.txt"},{"id":"B17","section":"Validation","input":"Registration name A; valid remaining fields; native constraints bypassed by harness","expected":"Server rejects name shorter than 2 characters","actual":"Server name-length error displayed","status":"PASS","evidence":"17-name-validation-fixed.png"},{"id":"B18","section":"Interface","input":"Open member navigation at 390 x 844","expected":"Visible role-appropriate mobile menu","actual":"Member links visible; no horizontal overflow","status":"PASS","evidence":"18-mobile-navigation.png"}]
+### Ran Playwright code
+```js
+await (async (page) => {
+    const base = 'http://127.0.0.1:8765';
+    const results = [];
+    const check = (condition, message) => { if (!condition) throw new Error(message); };
+    const shot = async (name) => {
+        await page.screenshot({ path: `output/playwright/${name}.png`, fullPage: true });
+        return `${name}.png`;
+    };
+    const login = async (email) => {
+        await page.goto(`${base}/login`);
+        await page.getByLabel('Email address', { exact: true }).fill(email);
+        await page.getByLabel('Password', { exact: true }).fill('Garden123!');
+        await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+        await page.waitForURL(/\/\w+\/dashboard$/);
+    };
+    const logout = async () => {
+        await page.getByRole('button', { name: 'Log out', exact: true }).first().click();
+        await page.waitForURL(`${base}/login`);
+    };
+    await page.addInitScript(() => { window.__phase4Xss = 0; });
+    await page.evaluate(() => { window.__phase4Xss = 0; });
+    const payload = '<script>window.__phase4Xss=1</script>\n<img src=x onerror="window.__phase4Xss=2">\n<svg onload="window.__phase4Xss=3"></svg>';
+    await page.getByLabel('Title', { exact: true }).fill('Phase 4 XSS evidence');
+    await page.getByRole('textbox', { name: 'Update', exact: true }).fill(payload);
+    await page.getByRole('combobox', { name: 'Visibility', exact: true }).selectOption('published');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    await page.getByRole('heading', { name: 'Phase 4 XSS evidence', exact: true }).waitFor();
+    await logout();
+    await login('member@garden.test');
+    await page.goto(`${base}/community-updates`);
+    await page.getByRole('button', { name: 'Read update: Phase 4 XSS evidence', exact: true }).click();
+    const detail = page.getByRole('dialog');
+    await detail.waitFor();
+    check((await detail.textContent()).includes(payload), 'Stored XSS text not preserved');
+    check(await detail.locator('script, img[onerror], svg[onload]').count() === 0, 'Payload became executable DOM');
+    check(await page.evaluate(() => window.__phase4Xss) === 0, 'Stored XSS executed');
+    results.push({ id: 'B09', section: 'XSS', input: payload, expected: 'Persisted text; no executable DOM or script execution', actual: 'All three payloads display as literal text to a different user; sentinel remains 0', status: 'PASS', evidence: await shot('09-stored-xss-as-text') });
+    await detail.getByRole('button', { name: 'Close', exact: true }).first().click();
+    const reflected = '<svg onload="window.__phase4Xss=4">';
+    await page.goto(`${base}/community-updates?${new URLSearchParams({ search: reflected })}`);
+    check(await page.getByRole('searchbox', { name: 'Search update titles and content' }).inputValue() === reflected, 'Search not reflected as data');
+    check(await page.locator('svg[onload]').count() === 0, 'Reflected payload became DOM');
+    check(await page.evaluate(() => window.__phase4Xss) === 0, 'Reflected XSS executed');
+    results.push({ id: 'B10', section: 'XSS', input: reflected, expected: 'Search field treats payload as text', actual: 'Literal field value; no SVG handler; sentinel 0', status: 'PASS', evidence: await shot('10-reflected-xss-as-text') });
+    await logout();
+    await login('staff@garden.test');
+    await page.goto(`${base}/garden-plots?view=manage`);
+    await page.getByRole('button', { name: 'New plot', exact: true }).click();
+    await page.getByLabel('Plot code', { exact: true }).fill('P4-EVIDENCE');
+    await page.getByLabel('Location', { exact: true }).fill('Phase Four Test Garden');
+    await page.getByLabel('Area (m²)', { exact: true }).fill('12.5');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    await page.goto(`${base}/garden-plots?view=manage&search=P4-EVIDENCE`);
+    await page.getByRole('cell', { name: 'P4-EVIDENCE', exact: true }).waitFor();
+    check(await page.locator('tbody tr').count() === 1, 'Search result count incorrect');
+    results.push({ id: 'B11', section: 'Functional', input: 'Staff creates P4-EVIDENCE, 12.5 square meters, then searches code', expected: 'Record persists; exactly one matching result', actual: 'New record visible after full reload and filtered search', status: 'PASS', evidence: await shot('11-add-plot-and-search') });
+    const sql = "' OR 1=1 --";
+    await page.goto(`${base}/garden-plots?${new URLSearchParams({ view: 'manage', search: sql })}`);
+    await page.getByText('No plots match these filters.', { exact: true }).waitFor();
+    check(await page.locator('tbody tr').count() === 0, 'Search SQL payload returned extra records');
+    results.push({ id: 'B12', section: 'SQL injection', input: sql, expected: 'Literal search; no extra rows or SQL error', actual: 'Empty result with normal HTTP 200 page', status: 'PASS', evidence: await shot('12-sql-search-empty') });
+    await logout();
+    await login('admin@garden.test');
+    await page.goto(`${base}/members`);
+    await page.getByRole('heading', { name: 'Members', exact: true }).first().waitFor();
+    results.push({ id: 'B13', section: 'Authorization', input: 'Admin opens /members', expected: 'Admin-only roster accessible', actual: 'Member administration page displayed', status: 'PASS', evidence: await shot('13-admin-members-allowed') });
+    await page.goto(`${base}/reports`);
+    const csv = await page.request.get(`${base}/reports/export?from=2026-09-01&to=2026-09-30`);
+    check(csv.status() === 200 && csv.headers()['content-type'].includes('text/csv'), 'CSV export failed');
+    check((await csv.text()).includes('Request ID'), 'CSV header missing');
+    results.push({ id: 'B14', section: 'Functional', input: 'Admin views reports and requests September CSV export', expected: 'Report displayed and valid CSV returned', actual: 'Report visible; HTTP 200 text/csv with expected header', status: 'PASS', evidence: await shot('14-report-and-export') });
+    const csrf = await page.request.put(`${base}/settings/profile`, { data: { name: 'CSRF should fail', email: 'admin@garden.test' }, headers: { Accept: 'application/json' } });
+    check(csrf.status() === 419, `CSRF check returned ${csrf.status()} instead of 419`);
+    results.push({ id: 'B15', section: 'Authentication', input: 'Authenticated PUT /settings/profile without CSRF token', expected: 'HTTP 419; no profile change', actual: 'HTTP 419 request rejected', status: 'PASS', evidence: 'browser-features.txt' });
+    const cookies = await page.context().cookies(base);
+    const sessionCookie = cookies.find(cookie => cookie.name === 'phase4_session');
+    check(sessionCookie && sessionCookie.httpOnly && sessionCookie.sameSite === 'Lax', 'Session cookie lacks expected flags');
+    results.push({ id: 'B16', section: 'Authentication', input: 'Inspect test session cookie attributes', expected: 'HttpOnly and SameSite=Lax', actual: 'Both flags present; cookie values omitted from evidence', status: 'PASS', evidence: 'browser-features.txt' });
+    await logout();
+    await page.goto(`${base}/register`);
+    await page.locator('form').evaluate(form => form.noValidate = true);
+    await page.getByLabel('Full name').fill('A');
+    await page.getByLabel('Email address').fill('phase4-browser@example.test');
+    await page.getByLabel('Password', { exact: true }).fill('Garden123!');
+    await page.getByLabel('Confirm password').fill('Garden123!');
+    await page.getByRole('button', { name: 'Create member account', exact: true }).click();
+    await page.getByText('The name field must be at least 2 characters.', { exact: true }).waitFor();
+    results.push({ id: 'B17', section: 'Validation', input: 'Registration name A; valid remaining fields; native constraints bypassed by harness', expected: 'Server rejects name shorter than 2 characters', actual: 'Server name-length error displayed', status: 'PASS', evidence: await shot('17-name-validation-fixed') });
+    await login('member@garden.test');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
+    await page.getByRole('dialog').waitFor();
+    await page.getByRole('dialog').getByRole('link', { name: 'My plot requests', exact: true }).waitFor();
+    check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Mobile menu overflows');
+    results.push({ id: 'B18', section: 'Interface', input: 'Open member navigation at 390 x 844', expected: 'Visible role-appropriate mobile menu', actual: 'Member links visible; no horizontal overflow', status: 'PASS', evidence: await shot('18-mobile-navigation') });
+    return results;
+}
+)(page);
+```
+### Page
+- Page URL: http://127.0.0.1:8765/member/dashboard
+- Page Title: Member dashboard · Community Garden

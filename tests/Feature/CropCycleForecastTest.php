@@ -68,15 +68,16 @@ class CropCycleForecastTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('workspace-page')
                 ->where('page', 'garden-calendar')
-                ->where('manageEventsHref', '/garden-calendar'));
+                ->where('manageEventsHref', '/garden-calendar?view=manage'));
 
-        $this->actingAs($staff)->get('/garden-calendar')
+        $this->actingAs($staff)->get('/garden-calendar?view=manage')
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('garden-calendar'));
     }
 
     public function test_unconfigured_crop_is_omitted_and_calendar_range_overlap_is_inclusive(): void
     {
+        Carbon::setTestNow('2026-09-24 12:00:00');
         $member = User::factory()->create();
         $configured = $this->crop(['maturity_days_min' => 10, 'maturity_days_max' => 20, 'harvest_window_days' => 5]);
         $unconfigured = $this->crop(['name' => 'Unconfigured', 'maturity_days_min' => null, 'maturity_days_max' => null]);

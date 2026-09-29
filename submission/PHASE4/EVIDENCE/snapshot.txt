@@ -1,0 +1,3 @@
+Snapshot date: 2026-09-29
+Base commit: 7d1a79b7213bc9961c74dd80174c8745c88967f3
+Includes current uncommitted source changes, including pre-existing frontend work. See source-manifest.json for exact packaged file hashes.

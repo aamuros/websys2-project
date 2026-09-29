@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import {
     CalendarDays,
     CalendarMinus2,
@@ -6,8 +7,8 @@ import {
     ChevronRight,
     List,
 } from 'lucide-react';
-import { Link } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 
@@ -407,7 +408,7 @@ export function GardenCalendarWorkspace({ title, description, events, manageEven
     }, [days, forecasts, gardenEvents]);
 
     return (
-        <AppLayout title={title} description={description} actions={manageEventsHref ? <Link href={manageEventsHref} className="inline-flex h-9 items-center rounded-md border bg-card px-3 text-sm font-medium hover:bg-muted">Manage events</Link> : undefined}>
+        <AppLayout title={title} description={description} actions={manageEventsHref ? <Button asChild variant="outline" className="rounded-xl"><Link href={manageEventsHref}>Manage events</Link></Button> : undefined}>
             <section className="flex h-[calc(100dvh-181px)] min-h-[360px] flex-col" aria-label="Garden calendar">
                 <CalendarToolbar weekStart={weekStart} view={view} onWeekChange={setWeekStart} onViewChange={setView} />
                 {forecastError && <p className="mt-2 text-xs text-muted-foreground" role="status">Harvest estimates could not be loaded right now.</p>}
