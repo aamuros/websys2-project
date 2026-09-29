@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\CommunityUpdateController;
 use App\Http\Controllers\CropController;
+use App\Http\Controllers\CropCycleForecastController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GardenPlotController;
 use App\Http\Controllers\HelpController;
@@ -32,6 +33,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/api/garden-plots', [GardenPlotController::class, 'apiIndex'])->middleware('role:member,staff');
+    Route::get('/api/garden-calendar/forecasts', [CropCycleForecastController::class, 'index'])->middleware('role:member,staff');
     Route::post('/api/plot-requests', [PlotRequestController::class, 'storeApi'])->middleware('role:member');
     Route::get('/garden-plots', [GardenPlotController::class, 'index'])->middleware('role:member,staff')->name('plots.index');
     Route::post('/garden-plots', [GardenPlotController::class, 'store'])->middleware('role:staff')->name('plots.store');

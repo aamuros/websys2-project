@@ -3,6 +3,7 @@
 !.env.example
 .git
 .github
+_local_artifacts
 .idea
 .vscode
 node_modules
