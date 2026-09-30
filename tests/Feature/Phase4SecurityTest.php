@@ -166,7 +166,7 @@ class Phase4SecurityTest extends TestCase
     public function test_sql07_legitimate_apostrophes_are_preserved(): void
     {
         $this->post('/register', $this->registration(['name' => "Maria O'Brien"]))
-            ->assertSessionHasNoErrors()->assertRedirect('/member/dashboard');
+            ->assertSessionHasNoErrors()->assertRedirect('/verify-email');
         $this->assertDatabaseHas('users', ['name' => "Maria O'Brien"]);
     }
 
@@ -239,7 +239,7 @@ class Phase4SecurityTest extends TestCase
     public function test_role01_registration_cannot_assign_admin_or_staff(): void
     {
         $this->post('/register', $this->registration(['role' => 'admin', 'is_active' => false]))
-            ->assertRedirect('/member/dashboard');
+            ->assertRedirect('/verify-email');
         $user = User::firstOrFail();
         $this->assertSame(UserRole::Member, $user->role);
         $this->assertTrue($user->is_active);

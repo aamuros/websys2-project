@@ -17,7 +17,8 @@ export function SettingsModal({ onClose, onRestoreFocus }: { onClose: () => void
     const user = usePage<SharedPageProps>().props.auth.user!;
     const [section, setSection] = useState<'profile' | 'password'>('profile');
     const [saved, setSaved] = useState('');
-    const profile = useForm({ name: user.name, email: user.email });
+    const profile = useForm({ name: user.name, email: user.email, current_password: '' });
+    const changingEmail = profile.data.email.trim().toLowerCase() !== user.email;
     const password = useForm({ current_password: '', password: '', password_confirmation: '' });
     const processing = profile.processing || password.processing;
 
@@ -27,6 +28,7 @@ export function SettingsModal({ onClose, onRestoreFocus }: { onClose: () => void
         profile.put('/settings/profile', {
             preserveScroll: true,
             onSuccess: () => {
+                profile.reset('current_password');
                 profile.setDefaults(profile.data);
                 setSaved('Profile updated.');
             },
@@ -109,6 +111,10 @@ export function SettingsModal({ onClose, onRestoreFocus }: { onClose: () => void
                                 <Field label="Email address" error={profile.errors.email}>
                                     <Input name="email" type="email" autoComplete="email" required maxLength={255} className="rounded-xl" aria-invalid={!!profile.errors.email} value={profile.data.email} onChange={event => { profile.setData('email', event.target.value); setSaved(''); }} />
                                 </Field>
+                                {changingEmail && <Field label="Current password to change email" error={profile.errors.current_password}>
+                                    <Input type="password" autoComplete="current-password" required className="rounded-xl" value={profile.data.current_password} onChange={event => profile.setData('current_password', event.target.value)} />
+                                    <p className="text-xs text-muted-foreground">Confirm your password, then verify the new address to keep using your workspace.</p>
+                                </Field>}
                             </fieldset>
                             <div className="mt-8 flex flex-wrap justify-end gap-2 border-t border-border/60 pt-5">
                                 <Button type="button" variant="ghost" disabled={processing || !profile.isDirty} onClick={() => { profile.reset(); profile.clearErrors(); setSaved(''); }}>Discard changes</Button>

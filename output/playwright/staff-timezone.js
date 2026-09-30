@@ -1,0 +1,62 @@
+async (page) => {
+    const base = 'http://127.0.0.1:8766';
+    const results = [];
+    const check = (value, message) => { if (!value) throw new Error(message); };
+    const pass = name => results.push({name, status:'PASS'});
+    const go = async path => { const r = await page.goto(base + path); check(r.status() === 200, path + ' HTTP ' + r.status()); await page.getByRole('main').waitFor(); };
+    const saved = async () => page.getByRole('dialog').waitFor({state:'hidden'});
+    const event = () => page.getByRole('article').filter({hasText:'Staff timezone workshop'});
+    const update = () => page.getByRole('article').filter({hasText:'Staff presentation update'});
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    try {
+    await go('/garden-calendar');
+    await page.getByRole('button',{name:'List view',exact:true}).click();
+    const before = await page.getByRole('button',{name:/Selected week:/}).getAttribute('aria-label');
+    await page.getByRole('button',{name:'Next week',exact:true}).click();
+    check(await page.getByRole('button',{name:/Selected week:/}).getAttribute('aria-label') !== before, 'Week navigation did not change');
+    await page.getByRole('button',{name:'Today',exact:true}).click();
+    check(await page.getByRole('button',{name:/Selected week:/}).getAttribute('aria-label') === before, 'Today did not restore week');
+    const forecast = await page.request.get(base + '/api/garden-calendar/forecasts?from=2026-09-27&to=2026-10-03');
+    check(forecast.status() === 200, 'Forecast API failed');
+    await page.getByRole('link',{name:'Manage events',exact:true}).click();
+    await page.waitForURL(/view=manage/);
+    pass('Calendar list view, week navigation, Today and forecast API');
+    await page.getByRole('button',{name:'New event',exact:true}).click();
+    await page.getByRole('textbox',{name:'Title',exact:true}).fill('Staff timezone workshop');
+    await page.getByRole('textbox',{name:'Description',exact:true}).fill('Presentation test event.');
+    await page.getByRole('textbox',{name:'Location',exact:true}).fill('Demo Garden');
+    await page.getByRole('textbox',{name:'Starts',exact:true}).fill('2026-10-01T09:00');
+    await page.getByRole('textbox',{name:'Ends',exact:true}).fill('2026-10-01T08:00');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await page.getByText('The ends at field must be a date after starts at.',{exact:true}).waitFor();
+    await page.getByRole('textbox',{name:/^Ends/}).fill('2026-10-01T11:00');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    await event().waitFor();
+    const eventText = await event().textContent();
+    const zone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+    results.push({name:'Event time matches entered local time',status:eventText.includes('9:00 AM') && eventText.includes('11:00 AM') ? 'PASS' : 'FAIL', timezone:zone, displayed:eventText});
+    await event().getByRole('button',{name:'Edit',exact:true}).click();
+    check(await page.getByRole('textbox',{name:'Starts',exact:true}).inputValue() === '2026-10-01T09:00', 'Event edit time changed');
+    await page.getByRole('textbox',{name:'Location',exact:true}).fill('Updated Demo Garden');
+    await page.getByRole('textbox',{name:'Starts',exact:true}).fill('2026-10-01T10:00');
+    await page.getByRole('textbox',{name:'Ends',exact:true}).fill('2026-10-01T12:00');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    check((await event().textContent()).includes('10:00 AM') && (await event().textContent()).includes('12:00 PM'), 'Edited event time mismatch');
+    await event().getByRole('button',{name:'Publish',exact:true}).click();
+    await page.getByText('Event published.',{exact:true}).waitFor();
+    await go('/garden-calendar');
+    await page.getByRole('button',{name:'List view',exact:true}).click();
+    await page.getByText('Staff timezone workshop',{exact:true}).waitFor();
+    await page.getByRole('link',{name:'Manage events',exact:true}).click();
+    await page.waitForURL(/view=manage/);
+    await event().getByRole('button',{name:'Archive',exact:true}).click();
+    await page.getByText('Event archived.',{exact:true}).waitFor();
+    pass('Event date validation, create, edit, publish, calendar visibility and archive');
+
+    check(errors.length === 0, 'JavaScript errors: ' + errors.join('; '));
+    return {results};
+    } catch (e) { return {results, failure:e.message}; }
+}

@@ -38,18 +38,26 @@ class ReportController extends Controller
         return response()->streamDownload(function () use ($from, $to) {
             $out = fopen('php://output', 'w');
             fputcsv($out, ['Request ID', 'Member', 'Plot', 'Status', 'Submitted']);
-            PlotRequest::with(['user', 'gardenPlot'])->whereBetween('created_at', [$from, $to.' 23:59:59'])->orderBy('id')->each(fn ($item) => fputcsv($out, [$item->id, $item->user->name, $item->gardenPlot?->plot_code, $item->status->value, $item->created_at->toDateString()]));
+            PlotRequest::with(['user', 'gardenPlot'])->whereBetween('created_at', [$from, $to.' 23:59:59'])->orderBy('id')->each(fn ($item) => fputcsv($out, [$item->id, $this->csvText($item->user->name), $this->csvText($item->gardenPlot?->plot_code), $item->status->value, $item->created_at->toDateString()]));
             fputcsv($out, []);
             fputcsv($out, ['Assignment ID', 'Member', 'Plot', 'Status', 'Start date', 'End date']);
-            PlotAssignment::with(['user', 'gardenPlot'])->whereBetween('created_at', [$from, $to.' 23:59:59'])->orderBy('id')->each(fn ($item) => fputcsv($out, [$item->id, $item->user->name, $item->gardenPlot->plot_code, $item->status->value, $item->start_date->toDateString(), $item->end_date?->toDateString()]));
+            PlotAssignment::with(['user', 'gardenPlot'])->whereBetween('created_at', [$from, $to.' 23:59:59'])->orderBy('id')->each(fn ($item) => fputcsv($out, [$item->id, $this->csvText($item->user->name), $this->csvText($item->gardenPlot->plot_code), $item->status->value, $item->start_date->toDateString(), $item->end_date?->toDateString()]));
             fclose($out);
         }, "garden-report-{$from}-{$to}.csv", ['Content-Type' => 'text/csv']);
     }
 
     private function range(Request $request): array
     {
-        $data = $request->validate(['from' => ['nullable', 'date'], 'to' => ['nullable', 'date', 'after_or_equal:from']]);
+        $request->merge(['from' => $request->input('from') ?: now()->subDays(29)->toDateString(), 'to' => $request->input('to') ?: now()->toDateString()]);
+        $data = $request->validate(['from' => ['required', 'date_format:Y-m-d'], 'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from']]);
 
-        return [$data['from'] ?? now()->subDays(29)->toDateString(), $data['to'] ?? now()->toDateString()];
+        return [$data['from'], $data['to']];
+    }
+
+    private function csvText(?string $value): string
+    {
+        $value ??= '';
+
+        return preg_match('/^[\s]*[=+\-@]|^[\t\r\n]/u', $value) ? "'".$value : $value;
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\GardenPlotStatus;
 use App\Enums\UserRole;
 use App\Models\CalendarEvent;
 use App\Models\GardenPlot;
+use App\Models\PlotAssignment;
 use App\Models\PlotRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,9 +64,23 @@ class OperationalWorkflowTest extends TestCase
     public function test_users_can_update_their_profile_and_password(): void
     {
         $member = User::factory()->create(['password' => Hash::make('old-password')]);
-        $this->actingAs($member)->put('/settings/profile', ['name' => 'Updated Gardener', 'email' => 'updated@example.com'])->assertRedirect();
+        $this->actingAs($member)->put('/settings/profile', ['name' => 'Updated Gardener', 'email' => 'updated@example.com', 'current_password' => 'old-password'])->assertRedirect();
         $this->put('/settings/password', ['current_password' => 'old-password', 'password' => 'new-password', 'password_confirmation' => 'new-password'])->assertRedirect();
         $this->assertTrue(Hash::check('new-password', $member->fresh()->password));
+    }
+
+    public function test_staff_event_times_are_stored_in_utc_when_created_and_edited(): void
+    {
+        $staff = User::factory()->create(['role' => UserRole::Staff]);
+        $data = ['title' => 'Morning workshop', 'starts_at' => '2026-10-01T09:00:00+08:00', 'ends_at' => '2026-10-01T11:00:00+08:00', 'status' => 'draft'];
+
+        $this->actingAs($staff)->post('/garden-calendar', $data)->assertRedirect()->assertSessionHasNoErrors();
+        $event = CalendarEvent::firstOrFail();
+        $this->assertDatabaseHas('calendar_events', ['id' => $event->id, 'starts_at' => '2026-10-01 01:00:00', 'ends_at' => '2026-10-01 03:00:00']);
+
+        $this->put("/garden-calendar/{$event->id}", [...$data, 'starts_at' => '2026-10-01T10:00:00+08:00', 'ends_at' => '2026-10-01T12:00:00+08:00'])
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('calendar_events', ['id' => $event->id, 'starts_at' => '2026-10-01 02:00:00', 'ends_at' => '2026-10-01 04:00:00']);
     }
 
     public function test_staff_can_archive_an_unused_plot_without_losing_history(): void
@@ -83,6 +98,24 @@ class OperationalWorkflowTest extends TestCase
         $this->actingAs($admin)->get('/reports/export?from=2026-09-01&to=2026-09-30')
             ->assertOk()
             ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_occupied_plot_actions_show_errors_without_changing_the_plot(): void
+    {
+        $staff = User::factory()->create(['role' => UserRole::Staff]);
+        $member = User::factory()->create(['role' => UserRole::Member]);
+        $plot = GardenPlot::create(['plot_code' => 'A-20', 'location' => 'North', 'size' => 12, 'status' => GardenPlotStatus::Occupied]);
+        PlotAssignment::create(['user_id' => $member->id, 'garden_plot_id' => $plot->id, 'start_date' => now()->toDateString(), 'status' => 'active']);
+
+        $this->actingAs($staff)->from('/garden-plots?view=manage')
+            ->put("/garden-plots/{$plot->id}", ['plot_code' => 'A-20', 'location' => 'North', 'size' => 12, 'status' => 'available'])
+            ->assertRedirect('/garden-plots?view=manage')->assertSessionHasErrors('status');
+        $this->post("/garden-plots/{$plot->id}/archive")
+            ->assertRedirect('/garden-plots?view=manage')->assertSessionHas('error');
+
+        $this->assertSame(GardenPlotStatus::Occupied, $plot->fresh()->status);
+        $this->assertNull($plot->fresh()->archived_at);
+        $this->assertDatabaseHas('plot_assignments', ['garden_plot_id' => $plot->id, 'status' => 'active']);
     }
 
     public function test_admin_cannot_manage_staff_pages(): void

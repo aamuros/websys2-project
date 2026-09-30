@@ -33,7 +33,8 @@ class AuthenticationTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertSame(UserRole::Member, $user->role);
         $this->assertTrue(Hash::check('password', $user->password));
-        $response->assertRedirect('/member/dashboard');
+        $response->assertRedirect('/verify-email');
+        $this->assertNull($user->email_verified_at);
     }
 
     public function test_users_are_redirected_to_their_role_dashboard_after_login(): void

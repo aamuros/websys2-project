@@ -22,6 +22,7 @@ export default function Members({ members, filters }: {
     const [selected, setSelected] = useState<Member | null>(null);
     const form = useForm({ role: 'member', is_active: true });
     function edit(member: Member) {
+        form.clearErrors();
         setSelected(member);
         form.setData({ role: member.role, is_active: member.is_active });
     }

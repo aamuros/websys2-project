@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { CalendarDays, ClipboardList, Download, Map, Sprout, UsersRound, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -23,9 +23,7 @@ export default function Reports({ filters, metrics, requestBreakdown, assignment
     requestBreakdown: BreakdownRow[];
     assignmentBreakdown: BreakdownRow[];
 }) {
-    function setFilter(key: keyof ReportFilters, value: string) {
-        router.get('/reports', { ...filters, [key]: value }, { preserveState: true, preserveScroll: true });
-    }
+    const form = useForm({ ...filters });
 
     const exportQuery = new URLSearchParams(filters).toString();
 
@@ -52,16 +50,19 @@ export default function Reports({ filters, metrics, requestBreakdown, assignment
                                     <p className="mt-1 text-sm leading-6 text-muted-foreground">Filters the activity breakdowns and CSV export.</p>
                                 </div>
                             </div>
-                            <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 xl:w-auto xl:shrink-0">
+                            <form onSubmit={event => { event.preventDefault(); form.get('/reports', { preserveState: true, preserveScroll: true }); }} className="grid w-full min-w-0 items-end gap-3 sm:grid-cols-3 xl:w-auto xl:shrink-0">
                                 <label className="block min-w-0 space-y-1.5">
                                     <span className="text-xs font-semibold text-muted-foreground">From date</span>
-                                    <input type="date" className={cn(fieldClass, 'min-w-0 rounded-xl')} value={filters.from} onChange={(event) => setFilter('from', event.target.value)} />
+                                    <input type="date" className={cn(fieldClass, 'min-w-0 rounded-xl')} value={form.data.from} onChange={event => form.setData('from', event.target.value)} />
+                                    {form.errors.from && <span role="alert" className="block text-xs text-destructive">{form.errors.from}</span>}
                                 </label>
                                 <label className="block min-w-0 space-y-1.5">
                                     <span className="text-xs font-semibold text-muted-foreground">To date</span>
-                                    <input type="date" className={cn(fieldClass, 'min-w-0 rounded-xl')} value={filters.to} onChange={(event) => setFilter('to', event.target.value)} />
+                                    <input type="date" className={cn(fieldClass, 'min-w-0 rounded-xl')} value={form.data.to} onChange={event => form.setData('to', event.target.value)} />
+                                    {form.errors.to && <span role="alert" className="block text-xs text-destructive">{form.errors.to}</span>}
                                 </label>
-                            </div>
+                                <Button disabled={form.processing}>{form.processing ? 'Applying…' : 'Apply dates'}</Button>
+                            </form>
                         </div>
                     </section>
 

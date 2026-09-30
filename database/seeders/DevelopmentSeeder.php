@@ -51,6 +51,8 @@ class DevelopmentSeeder extends Seeder
                 ['email' => $account['email']],
                 [...$account, 'password' => Hash::make('Garden123!')],
             );
+            // These are trusted, local-only presentation fixtures.
+            $users[$account['email']]->markEmailAsVerified();
         }
 
         $plots = [

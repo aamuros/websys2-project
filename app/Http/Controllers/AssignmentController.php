@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -50,9 +51,15 @@ class AssignmentController extends Controller
         DB::transaction(function () use ($request, $data) {
             $plot = GardenPlot::lockForUpdate()->findOrFail($data['garden_plot_id']);
             $member = User::lockForUpdate()->findOrFail($data['user_id']);
-            abort_unless(! $plot->archived_at && $plot->status->value === 'available', 422, 'Plot is unavailable.');
-            abort_unless($member->role->value === 'member' && $member->is_active, 422, 'Member no longer has active garden access.');
-            abort_if($member->plotAssignments()->where('status', 'active')->exists(), 422, 'Member already has an active assignment.');
+            if ($plot->archived_at || $plot->status->value !== 'available') {
+                throw ValidationException::withMessages(['garden_plot_id' => 'Plot is unavailable.']);
+            }
+            if ($member->role->value !== 'member' || ! $member->is_active) {
+                throw ValidationException::withMessages(['user_id' => 'Member no longer has active garden access.']);
+            }
+            if ($member->plotAssignments()->where('status', 'active')->exists()) {
+                throw ValidationException::withMessages(['user_id' => 'Member already has an active assignment. Close it before creating another.']);
+            }
             $assignment = PlotAssignment::create([...$data, 'status' => 'active', 'assigned_by' => $request->user()->id]);
             $plot->update(['status' => 'occupied']);
             $assignment->user->notify(new GardenNotification("You were assigned plot {$plot->plot_code}.", '/assignments'));
@@ -66,7 +73,9 @@ class AssignmentController extends Controller
         $this->requireStaff($request);
         DB::transaction(function () use ($request, $assignment) {
             $assignment = PlotAssignment::lockForUpdate()->findOrFail($assignment->id);
-            abort_unless($assignment->status->value === 'active', 422);
+            if ($assignment->status->value !== 'active') {
+                throw ValidationException::withMessages(['end_date' => 'This assignment is already closed. Refresh to see the latest status.']);
+            }
             $assignment->update($request->validate(['start_date' => ['required', 'date'], 'end_date' => ['nullable', 'date', 'after_or_equal:start_date']]));
         });
 
@@ -79,7 +88,9 @@ class AssignmentController extends Controller
         DB::transaction(function () use ($request, $assignment) {
             $plot = GardenPlot::lockForUpdate()->findOrFail($assignment->garden_plot_id);
             $assignment = PlotAssignment::lockForUpdate()->findOrFail($assignment->id);
-            abort_unless($assignment->status->value === 'active', 422);
+            if ($assignment->status->value !== 'active') {
+                throw ValidationException::withMessages(['end_date' => 'This assignment is already closed. Refresh to see the latest status.']);
+            }
             $data = $request->validate(['status' => ['required', Rule::in(['ended', 'cancelled'])], 'end_date' => ['required', 'date', 'after_or_equal:'.$assignment->start_date->toDateString()]]);
             $assignment->update($data);
             if ($plot->status->value === 'occupied') {

@@ -134,9 +134,15 @@ class PlotRequestController extends Controller
             $plot = GardenPlot::lockForUpdate()->findOrFail($plotRequest->garden_plot_id);
             $member = User::lockForUpdate()->findOrFail($plotRequest->user_id);
             $plotRequest = PlotRequest::lockForUpdate()->findOrFail($plotRequest->id);
-            abort_unless($plotRequest->status->value === 'pending' && ! $plot->archived_at && $plot->status->value === 'available', 422, 'This request or plot is no longer available.');
-            abort_unless($member->role->value === 'member' && $member->is_active, 422, 'This member no longer has active garden access.');
-            abort_if($member->plotAssignments()->where('status', 'active')->exists(), 422, 'This member already has an active assignment.');
+            if ($plotRequest->status->value !== 'pending' || $plot->archived_at || $plot->status->value !== 'available') {
+                throw ValidationException::withMessages(['decision_notes' => 'This request or plot is no longer available. Refresh to see the latest status.']);
+            }
+            if ($member->role->value !== 'member' || ! $member->is_active) {
+                throw ValidationException::withMessages(['decision_notes' => 'This member no longer has active garden access.']);
+            }
+            if ($member->plotAssignments()->where('status', 'active')->exists()) {
+                throw ValidationException::withMessages(['decision_notes' => 'This member already has an active assignment. Close it before approving another request.']);
+            }
             PlotAssignment::create(['start_date' => $data['start_date'], 'end_date' => $data['end_date'] ?? null, 'user_id' => $member->id, 'garden_plot_id' => $plot->id, 'status' => 'active', 'assigned_by' => $request->user()->id]);
             $plotRequest->update(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'decision_notes' => $data['decision_notes'] ?? null]);
             $plot->update(['status' => 'occupied']);
@@ -158,7 +164,9 @@ class PlotRequestController extends Controller
         $data = $request->validate(['decision_notes' => ['required', 'string', 'max:1000']]);
         DB::transaction(function () use ($request, $plotRequest, $data) {
             $plotRequest = PlotRequest::lockForUpdate()->findOrFail($plotRequest->id);
-            abort_unless($plotRequest->status->value === 'pending', 422);
+            if ($plotRequest->status->value !== 'pending') {
+                throw ValidationException::withMessages(['decision_notes' => 'Only pending requests can be rejected. Refresh to see the latest status.']);
+            }
             $plotRequest->update([...$data, 'status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
             $plotRequest->user->notify(new GardenNotification('Your plot request was not approved.', '/plot-requests'));
         });

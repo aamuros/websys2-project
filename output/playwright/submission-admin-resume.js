@@ -1,0 +1,65 @@
+async (page) => {
+    const base = 'http://127.0.0.1:8766';
+    const results = [];
+    const check = (value, message) => { if (!value) throw new Error(message); };
+    const pass = name => results.push({name, status:'PASS'});
+    const go = async path => { const r = await page.goto(base + path); check(r.status() === 200, path + ' HTTP ' + r.status()); await page.getByRole('main').waitFor(); };
+    const login = async (target, email) => { await target.goto(base+'/login'); await target.getByLabel('Email address',{exact:true}).fill(email); await target.getByLabel('Password',{exact:true}).fill('Garden123!'); await target.getByRole('button',{name:'Sign in',exact:true}).click(); await target.waitForURL(/\/\w+\/dashboard$/, {waitUntil:"domcontentloaded"}); };
+    const row = text => page.locator('tbody tr').filter({hasText:text});
+    const saved = async () => page.getByRole('dialog').waitFor({state:'hidden'});
+    let otherContext;
+    try {
+    otherContext = await page.context().browser().newContext();
+    const otherPage = await otherContext.newPage();
+    await login(otherPage,'rosalie@garden.test');
+    await go('/members?search=rosalie');
+    await page.getByRole('button',{name:'Manage account for Rosalie Flores',exact:true}).click();
+    await page.getByRole('dialog').getByRole('combobox',{name:'Role',exact:true}).selectOption('member');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    await otherPage.goto(base+'/staff/dashboard');
+    check(otherPage.url() === base+'/login', 'Old session survived role change');
+    await login(otherPage,'rosalie@garden.test');
+    check(otherPage.url() === base+'/member/dashboard', 'Demoted user did not enter member workspace');
+    await page.getByRole('button',{name:'Manage account for Rosalie Flores',exact:true}).click();
+    await page.getByRole('dialog').getByRole('combobox',{name:'Role',exact:true}).selectOption('member');
+    await page.getByRole('dialog').getByRole('checkbox').uncheck();
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    await otherPage.goto(base+'/login');
+    await otherPage.getByLabel('Email address',{exact:true}).fill('rosalie@garden.test');
+    await otherPage.getByLabel('Password',{exact:true}).fill('Garden123!');
+    await otherPage.getByRole('button',{name:'Sign in',exact:true}).click();
+    await otherPage.getByText('These credentials do not match our records.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Manage account for Rosalie Flores',exact:true}).click();
+    await page.getByRole('dialog').getByRole('checkbox').check();
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    await login(otherPage,'rosalie@garden.test');
+    check(otherPage.url() === base+'/member/dashboard', 'Reactivation did not restore member login');
+    await otherContext.close(); otherContext=null;
+    pass('Promotion, live session revocation, suspension, reactivation and restored fixture');
+    for (const path of ['/staff/dashboard','/member/dashboard','/garden-plots','/crops','/assignments']) check((await page.request.get(base+path)).status()===403,'Admin boundary failed '+path);
+    await go('/community-updates');
+    await page.getByRole('button',{name:'New update',exact:true}).click();
+    await page.getByLabel('Title',{exact:true}).fill('Submission admin announcement');
+    await page.getByRole('textbox',{name:'Update',exact:true}).fill('Submission browser verification announcement.');
+    await page.getByRole('combobox',{name:'Visibility',exact:true}).selectOption('published');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    await page.getByRole('heading',{name:'Submission admin announcement',exact:true}).waitFor();
+    pass('Admin role boundaries and announcement publishing');
+    await page.setViewportSize({width:390,height:844});
+    await go('/reports');
+    check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Mobile report overflow');
+    await page.getByRole('button',{name:'Open navigation',exact:true}).click();
+    await page.getByRole('dialog').getByRole('link',{name:'Members',exact:true}).click();
+    await page.waitForURL(base+'/members');
+    await saved();
+    check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Mobile member overflow');
+    await page.setViewportSize({width:1280,height:800});
+    pass('Admin mobile reports, directory and navigation');
+    return {results};
+    } catch (e) { return {results,failure:e.message}; }
+    finally { if(otherContext) await otherContext.close(); }
+}

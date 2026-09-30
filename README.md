@@ -92,6 +92,11 @@ Copy `.env.example`; never commit `.env` or live credentials.
 | `SESSION_DRIVER` | Must remain `database` outside tests |
 | `SESSION_CONNECTION`, `SESSION_TABLE` | Session database connection and `sessions` table |
 | `SESSION_SECURE_COOKIE` | Set `true` in HTTPS production |
+| `CACHE_LIMITER` | Keep `database` so authentication rate limits persist across requests |
+| `MAIL_MAILER` | `log` previews emails locally; use `smtp` for inbox delivery |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME` | SMTP provider endpoint and transport scheme |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | Server-only SMTP credentials |
+| `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Sender approved by the email provider |
 | `SUPABASE_URL` | Reserved for future server-side Storage calls |
 | `SUPABASE_STORAGE_BUCKET` | Future upload bucket name |
 | `SUPABASE_SERVICE_ROLE_KEY` | Future backend-only Storage credential; never expose with `VITE_` |
@@ -133,7 +138,38 @@ php artisan db:seed
 
 Development data includes 15 plots, 10 accounts, requests in every status, active and past assignments, eight crops, planting records, community announcements, and events in the current week for both calendar and list views. Event dates are relative to the first seed run. Rerunning the seeder adds missing sample records while preserving existing accounts and edits. Sign in as `member@garden.test` to see the sample personal assignment, planting records, and request history.
 
-Public registration always creates a `member` account. Admin and staff roles must be assigned through a trusted backend workflow in a future feature.
+Public registration always creates a `member` account and requires email confirmation before workspace access. Local fixture accounts are marked verified by the development seeder. Admins can change member/staff roles in the Members page; creating an admin requires a trusted backend workflow.
+
+## Email confirmation and password recovery
+
+Registration sends a signed confirmation link that expires after one hour. Unconfirmed accounts can resend confirmation, correct their email in Settings, and log out; workspace pages and APIs require confirmation. Changing an email requires the current password and confirms the new address again.
+
+The login page provides **Forgot password?** and **Remember me**. Reset links expire after one hour, are stored as hashes, and work once. Recovery requests return the same message for existing, unknown, and suspended accounts. Password reset revokes all existing sessions and remembered logins; changing a password in Settings preserves the current session and revokes other sessions. Administrative role/access changes also revoke the affected user's sessions.
+
+Apply migrations to an existing database without resetting records:
+
+```bash
+php artisan migrate
+php artisan db:seed # local demonstration fixtures only
+```
+
+Existing real accounts start unverified and must confirm their email. Only known local fixture accounts are automatically verified by the development seeder.
+
+`MAIL_MAILER=log` writes rendered confirmation/reset emails to the configured Laravel log; it does not deliver to inboxes. To deliver mail, configure your provider in `.env`:
+
+```dotenv
+APP_URL=https://your-application.example
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=your-provider-host
+MAIL_PORT=587
+MAIL_USERNAME=your-provider-username
+MAIL_PASSWORD=your-provider-password
+MAIL_FROM_ADDRESS=your-approved-sender@example.com
+MAIL_FROM_NAME="Community Garden"
+```
+
+Use your provider's actual scheme and port (`smtps` commonly uses 465). `APP_URL` must match the address opened in the browser, including scheme and port; email links deliberately use this configured origin. After changing environment variables, run `php artisan config:clear` and restart the app. For production, rebuild the configuration cache as part of deployment. Confirm an email and reset a password through a real inbox before presenting inbox delivery. Local `.test` fixture addresses cannot receive public email.
 
 ## Routes and authorization
 
@@ -142,7 +178,7 @@ Public registration always creates a `member` account. Admin and staff roles mus
 - `/staff/dashboard` — exact `staff` role
 - `/admin/dashboard` — exact `admin` role
 
-Login redirects directly to the user's role dashboard. Laravel's web middleware supplies encrypted cookies, database sessions, and CSRF protection. `EnsureUserHasRole` provides the initial role boundary without an RBAC package.
+Login redirects confirmed users to their current role dashboard and unconfirmed users to `/verify-email`. Laravel's web middleware supplies encrypted cookies, database sessions, and CSRF protection. `EnsureUserHasRole` enforces role boundaries.
 
 ### Role navigation
 
@@ -165,14 +201,13 @@ Members see personal labels and content for their plot requests and assignments.
 
 ## Database foundation
 
-The initial schema is deliberately limited to:
+Authentication uses:
 
 - `users` and `sessions`
-- `garden_plots`
-- `plot_requests`
-- `plot_assignments`
+- `password_reset_tokens`
+- `cache` and `cache_locks` for persistent rate limits
 
-The Eloquent models include enum/status casts and bidirectional relationships. Plot CRUD and other community-garden features are intentionally not part of this scaffold.
+Garden operations have separate tables for plots, requests, assignments, crops, planting records, calendar events, community updates, and notifications. Eloquent models include enum/status casts and relationships. Laravel owns access to these tables through its PostgreSQL connection.
 
 ## Frontend
 
@@ -190,7 +225,7 @@ npm run build
 composer validate --strict
 ```
 
-Tests use in-memory SQLite for speed and cover registration, login/logout, password hashing, role redirects, protected routes, model relationships, migrations, and repeatable seed data. The same checks run in `.github/workflows/ci.yml` on pushes and pull requests.
+Tests use in-memory SQLite for speed and cover registration, email verification, password recovery, session revocation, login/logout, role boundaries, operational workflows, migrations, and repeatable seed data. The same checks run in `.github/workflows/ci.yml` on pushes and pull requests. See [the submission readiness report](docs/SUBMISSION_READINESS.md) for browser checks, PostgreSQL verification, and remaining deployment setup.
 
 ## Production build
 

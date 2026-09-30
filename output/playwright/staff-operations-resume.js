@@ -1,0 +1,87 @@
+async (page) => {
+    const base = 'http://127.0.0.1:8766';
+    const results = [];
+    const check = (value, message) => { if (!value) throw new Error(message); };
+    const pass = name => { results.push({name, status:'PASS'}); console.log('PASS: ' + name); };
+    const go = async path => { const r = await page.goto(base + path); check(r.status() === 200, path + ' HTTP ' + r.status()); await page.getByRole('main').waitFor(); };
+    const saved = async () => page.getByRole('dialog').waitFor({state:'hidden'});
+    const row = text => page.locator('tbody tr').filter({hasText:text});
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+
+    try {
+    await go('/assignments');
+    await page.getByRole('button',{name:'New assignment',exact:true}).click();
+    await page.getByRole('combobox',{name:/^Member/}).selectOption({label:'Garden Member'});
+    await page.getByRole('combobox',{name:'Plot',exact:true}).selectOption({label:'B-02'});
+    await page.getByRole('button',{name:'Create assignment',exact:true}).click();
+    await page.getByText('Member already has an active assignment. Close it before creating another.',{exact:true}).waitFor();
+    await page.getByRole('combobox',{name:/^Member/}).selectOption({label:'Rosalie Flores'});
+    await page.getByRole('button',{name:'Create assignment',exact:true}).click();
+    await saved();
+    await row('Rosalie Flores').waitFor();
+    pass('Direct assignment rejects duplicate and accepts eligible member');
+    await row('Rosalie Flores').getByRole('button',{name:'Close',exact:true}).click();
+    await page.getByRole('combobox',{name:'Outcome',exact:true}).selectOption('cancelled');
+    await page.getByRole('button',{name:'Close assignment',exact:true}).click();
+    await saved();
+    pass('Assignment cancellation releases plot');
+
+    await go('/garden-plots?view=manage');
+    await page.getByRole('link',{name:'Next',exact:true}).click();
+    await page.waitForURL(/page=2/);
+    await row('C-05').waitFor();
+    await page.getByRole('link',{name:'Previous',exact:true}).click();
+    await page.waitForURL(/page=1/);
+    pass('Plot pagination');
+    await row('A-02').getByRole('button',{name:'Edit',exact:true}).click();
+    await page.getByRole('combobox',{name:'Status',exact:true}).selectOption('available');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await page.getByText('End the active assignment before changing this plot status.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Cancel',exact:true}).click();
+    page.once('dialog', dialog => dialog.accept());
+    await row('A-02').getByRole('button',{name:'Archive',exact:true}).click();
+    await page.getByText('An occupied plot cannot be archived. Close its active assignment first.',{exact:true}).waitFor();
+    pass('Occupied plot update and archive show recoverable errors');
+    await page.getByRole('button',{name:'New plot',exact:true}).click();
+    await page.getByLabel('Plot code').fill('STAFF-DEMO');
+    await page.getByLabel('Location',{exact:true}).fill('Presentation Garden');
+    await page.getByLabel('Area (m²)').fill('12.5');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    await page.getByRole('searchbox',{name:'Search this page'}).fill('STAFF-DEMO');
+    await page.getByRole('searchbox',{name:'Search this page'}).press('Enter');
+    await page.waitForURL(/search=STAFF-DEMO/);
+    check(await page.locator('tbody tr').count() === 1, 'Plot search result');
+    await row('STAFF-DEMO').getByRole('button',{name:'Edit',exact:true}).click();
+    await page.getByLabel('Location',{exact:true}).fill('Updated Presentation Garden');
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    await saved();
+    check((await row('STAFF-DEMO').textContent()).includes('Updated Presentation Garden'), 'Plot edit missing');
+    page.once('dialog', dialog => dialog.accept());
+    await row('STAFF-DEMO').getByRole('button',{name:'Archive',exact:true}).click();
+    await page.getByText('No plots match these filters.',{exact:true}).waitFor();
+    await page.getByRole('combobox',{name:'Status',exact:true}).selectOption('archived');
+    await row('STAFF-DEMO').waitFor();
+    pass('Plot create, search, edit, archive and archived filter');
+
+    await go('/crops');
+    await page.getByRole('button',{name:'Add crop',exact:true}).click();
+    await page.getByLabel('Crop name').fill('Presentation Basil');
+    await page.getByRole('button',{name:'herb',exact:true}).click();
+    await page.getByLabel('Earliest days').fill('30');
+    await page.getByLabel('Latest days').fill('45');
+    await page.getByRole('dialog').getByRole('button',{name:'Add crop',exact:true}).click();
+    await saved();
+    await page.getByRole('button',{name:'Edit crop: Presentation Basil',exact:true}).click();
+    await page.getByLabel('Latest days').fill('50');
+    await page.getByRole('button',{name:'Save changes',exact:true}).click();
+    await saved();
+    check((await page.getByRole('listitem').filter({hasText:'Presentation Basil'}).textContent()).includes('30–50 days'), 'Harvest estimate missing');
+    await page.getByRole('group',{name:'Filter crops by type'}).getByRole('button',{name:'herb',exact:true}).click();
+    await page.getByText('Presentation Basil',{exact:true}).waitFor();
+    pass('Crop create, edit, harvest estimate and type filter');
+    check(errors.length === 0, 'JavaScript errors: ' + errors.join('; '));
+    return {results};
+    } catch (e) { return {results, failure:e.message}; }
+}

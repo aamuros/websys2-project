@@ -166,8 +166,8 @@ class MemberBackendTest extends TestCase
         $this->assertSame('/assignments', $member->unreadNotifications()->firstOrFail()->data['url']);
         $this->assertSame('/plot-requests', $other->unreadNotifications()->firstOrFail()->data['url']);
 
-        $this->post("/plot-requests/{$accepted->id}/approve", ['start_date' => '2026-09-28'])->assertUnprocessable();
-        $this->post("/plot-requests/{$accepted->id}/reject", ['decision_notes' => 'Changed mind'])->assertUnprocessable();
+        $this->post("/plot-requests/{$accepted->id}/approve", ['start_date' => '2026-09-28'])->assertRedirect()->assertSessionHasErrors('decision_notes');
+        $this->post("/plot-requests/{$accepted->id}/reject", ['decision_notes' => 'Changed mind'])->assertRedirect()->assertSessionHasErrors('decision_notes');
         $this->assertDatabaseCount('plot_assignments', 1);
         $this->assertSame(1, $member->unreadNotifications()->count());
     }
@@ -181,12 +181,12 @@ class MemberBackendTest extends TestCase
         $this->actingAs($staff);
 
         $plot->update(['archived_at' => now()]);
-        $this->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertUnprocessable();
+        $this->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertRedirect()->assertSessionHasErrors('decision_notes');
         $plot->update(['archived_at' => null]);
         $member->update(['is_active' => false]);
-        $this->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertUnprocessable();
+        $this->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertRedirect()->assertSessionHasErrors('decision_notes');
         $member->update(['is_active' => true, 'role' => UserRole::Staff]);
-        $this->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertUnprocessable();
+        $this->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertRedirect()->assertSessionHasErrors('decision_notes');
 
         $this->assertDatabaseCount('plot_assignments', 0);
         $this->assertSame('pending', $plotRequest->fresh()->status->value);
@@ -201,8 +201,8 @@ class MemberBackendTest extends TestCase
         $plot = $this->plot('B-01');
         $plotRequest = $this->plotRequest($member, $plot);
 
-        $this->actingAs($staff)->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertUnprocessable();
-        $this->post('/assignments', ['user_id' => $member->id, 'garden_plot_id' => $plot->id, 'start_date' => '2026-09-28'])->assertUnprocessable();
+        $this->actingAs($staff)->post("/plot-requests/{$plotRequest->id}/approve", ['start_date' => '2026-09-28'])->assertRedirect()->assertSessionHasErrors('decision_notes');
+        $this->post('/assignments', ['user_id' => $member->id, 'garden_plot_id' => $plot->id, 'start_date' => '2026-09-28'])->assertRedirect()->assertSessionHasErrors('user_id');
         $this->assertDatabaseCount('plot_assignments', 1);
         $this->assertSame('available', $plot->fresh()->status->value);
     }
@@ -221,7 +221,7 @@ class MemberBackendTest extends TestCase
         $this->assertSame(1, $member->unreadNotifications()->count());
         $this->post('/assignments', ['user_id' => $other->id, 'garden_plot_id' => $plot->id, 'start_date' => '2026-09-28'])
             ->assertSessionHasNoErrors()->assertRedirect();
-        $this->post("/assignments/{$assignment->id}/close", ['status' => 'ended', 'end_date' => '2026-09-28'])->assertUnprocessable();
+        $this->post("/assignments/{$assignment->id}/close", ['status' => 'ended', 'end_date' => '2026-09-28'])->assertRedirect()->assertSessionHasErrors('end_date');
         $this->assertSame('occupied', $plot->fresh()->status->value);
         $this->assertSame(1, $plot->assignments()->where('status', 'active')->count());
     }

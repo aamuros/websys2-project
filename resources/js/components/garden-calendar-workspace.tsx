@@ -100,12 +100,22 @@ function CalendarToolbar({
     onWeekChange: (start: Date) => void;
     onViewChange: (view: CalendarView) => void;
 }) {
+    const dateInput = useRef<HTMLInputElement>(null);
+
     return (
         <div className="flex min-h-7 shrink-0 items-center justify-between gap-3" aria-label="Calendar controls">
-            <button type="button" className={cn(toolbarButtonClass, 'min-w-0 px-2.5 sm:px-3')} aria-label={`Selected week: ${formatWeekRange(weekStart)}`}>
+            <button type="button" className={cn(toolbarButtonClass, 'min-w-0 px-2.5 sm:px-3')} aria-label={`Selected week: ${formatWeekRange(weekStart)}`} onClick={() => {
+                if (dateInput.current?.showPicker) dateInput.current.showPicker();
+                else dateInput.current?.focus();
+            }}>
                 <span className="truncate">{formatWeekRange(weekStart)}</span>
                 <ChevronDown className="size-4 shrink-0 stroke-[1.8]" aria-hidden="true" />
             </button>
+            <input ref={dateInput} type="date" className="sr-only" aria-label="Choose calendar date" value={dateKey(weekStart)} onChange={(event) => {
+                if (!event.target.value) return;
+                const selected = new Date(`${event.target.value}T12:00:00`);
+                onWeekChange(addDays(selected, -selected.getDay()));
+            }} />
 
             <div className="flex shrink-0 items-center gap-2">
                 <button type="button" className={cn(toolbarButtonClass, 'hidden px-2.5 sm:inline-flex')} onClick={() => onWeekChange(currentWeekStart())}>

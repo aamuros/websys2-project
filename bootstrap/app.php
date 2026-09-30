@@ -6,6 +6,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -19,6 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias(['role' => EnsureUserHasRole::class, 'active' => EnsureUserIsActive::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (ThrottleRequestsException $exception, Request $request) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['email' => 'Too many requests. Please wait a minute and try again.']);
+            }
+        });
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

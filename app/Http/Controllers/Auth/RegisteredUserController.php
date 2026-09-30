@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class RegisteredUserController extends Controller
 {
@@ -27,12 +28,19 @@ class RegisteredUserController extends Controller
             'email' => (string) $request->string('email'),
             'password' => Hash::make((string) $request->string('password')),
             'role' => UserRole::Member,
+            'is_active' => true,
         ]);
 
-        event(new Registered($user));
         Auth::login($user);
         $request->session()->regenerate();
+        try {
+            event(new Registered($user));
+        } catch (TransportExceptionInterface $exception) {
+            report($exception);
 
-        return redirect()->route('member.dashboard');
+            return redirect()->route('verification.notice')->with('error', 'Your account is created, but the confirmation email could not be sent. Please try resending it shortly.');
+        }
+
+        return redirect()->route('verification.notice');
     }
 }

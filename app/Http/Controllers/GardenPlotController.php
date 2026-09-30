@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,7 +68,9 @@ class GardenPlotController extends Controller
     {
         $this->requireStaff($request);
         $data = $this->validated($request);
-        abort_if($data['status'] === 'occupied', 422, 'Occupied status is managed through assignments.');
+        if ($data['status'] === 'occupied') {
+            throw ValidationException::withMessages(['status' => 'Occupied status is managed through assignments.']);
+        }
         GardenPlot::create($data);
 
         return back()->with('success', 'Garden plot created.');
@@ -77,8 +80,12 @@ class GardenPlotController extends Controller
     {
         $this->requireStaff($request);
         $data = $this->validated($request, $gardenPlot);
-        abort_if($data['status'] === 'occupied' && ! $gardenPlot->assignments()->where('status', 'active')->exists(), 422, 'Occupied status is managed through assignments.');
-        abort_if($gardenPlot->assignments()->where('status', 'active')->exists() && $data['status'] !== 'occupied', 422, 'End the active assignment before changing this plot status.');
+        if ($data['status'] === 'occupied' && ! $gardenPlot->assignments()->where('status', 'active')->exists()) {
+            throw ValidationException::withMessages(['status' => 'Occupied status is managed through assignments.']);
+        }
+        if ($gardenPlot->assignments()->where('status', 'active')->exists() && $data['status'] !== 'occupied') {
+            throw ValidationException::withMessages(['status' => 'End the active assignment before changing this plot status.']);
+        }
         $gardenPlot->update($data);
 
         return back()->with('success', 'Garden plot updated.');
@@ -87,7 +94,9 @@ class GardenPlotController extends Controller
     public function archive(Request $request, GardenPlot $gardenPlot): RedirectResponse
     {
         $this->requireStaff($request);
-        abort_if($gardenPlot->assignments()->where('status', 'active')->exists(), 422, 'An occupied plot cannot be archived.');
+        if ($gardenPlot->assignments()->where('status', 'active')->exists()) {
+            return back()->with('error', 'An occupied plot cannot be archived. Close its active assignment first.');
+        }
         $gardenPlot->update(['archived_at' => now()]);
 
         return back()->with('success', 'Plot archived as maintenance.');

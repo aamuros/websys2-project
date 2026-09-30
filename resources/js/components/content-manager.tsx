@@ -24,6 +24,12 @@ function dateTimeLabel(value: string) {
     return new Date(value).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
+function localDateTimeValue(value?: string) {
+    if (!value) return '';
+    const date = new Date(value);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
 export function ContentManager({ kind, items, filters }: {
     kind: 'event' | 'update';
     items: Paginated<ContentItem>;
@@ -38,20 +44,26 @@ export function ContentManager({ kind, items, filters }: {
     const form = useForm({ title: '', description: '', body: '', location: '', starts_at: '', ends_at: '', status: 'draft' });
 
     function edit(item?: ContentItem) {
+        form.clearErrors();
         setSelected(item ?? null);
         form.setData({
             title: item?.title ?? '',
             description: item?.description ?? '',
             body: item?.body ?? '',
             location: item?.location ?? '',
-            starts_at: item?.starts_at?.slice(0, 16) ?? '',
-            ends_at: item?.ends_at?.slice(0, 16) ?? '',
+            starts_at: localDateTimeValue(item?.starts_at),
+            ends_at: localDateTimeValue(item?.ends_at),
             status: item?.status === 'published' ? 'published' : 'draft',
         });
         setOpen(true);
     }
 
     function save() {
+        form.transform(data => kind === 'event' ? {
+            ...data,
+            starts_at: data.starts_at ? new Date(data.starts_at).toISOString() : '',
+            ends_at: data.ends_at ? new Date(data.ends_at).toISOString() : '',
+        } : data);
         const options = { onSuccess: () => setOpen(false) };
         if (selected) form.put(`${path}/${selected.id}`, options);
         else form.post(path, options);

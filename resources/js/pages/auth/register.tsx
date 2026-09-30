@@ -19,7 +19,7 @@ export default function Register() {
         <AuthLayout>
             <Head title="Register" />
             <Card className="animate-rise-in border-0 bg-transparent shadow-none sm:border sm:bg-card sm:shadow-sm">
-                <CardHeader className="px-0 sm:px-6"><CardTitle className="text-2xl">Join the garden</CardTitle><CardDescription>Create a member account to get started.</CardDescription></CardHeader>
+                <CardHeader className="px-0 sm:px-6"><CardTitle className="text-2xl">Join the garden</CardTitle><CardDescription>Create a member account, then confirm your email to get started.</CardDescription></CardHeader>
                 <CardContent className="px-0 sm:px-6">
                     <form onSubmit={submit} className="space-y-4">
                         <div className="space-y-2"><Label htmlFor="name">Full name</Label><Input id="name" autoComplete="name" autoFocus required minLength={2} maxLength={255} value={data.name} onChange={(event) => setData('name', event.target.value)} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'register-name-error' : undefined} />{errors.name && <p id="register-name-error" role="alert" className="text-sm text-destructive">{errors.name}</p>}</div>

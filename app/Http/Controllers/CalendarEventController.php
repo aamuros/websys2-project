@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CalendarEvent;
 use App\Models\User;
 use App\Notifications\GardenNotification;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -82,7 +83,11 @@ class CalendarEventController extends Controller
 
     private function validated(Request $request): array
     {
-        return $request->validate(['title' => ['required', 'string', 'max:160'], 'description' => ['nullable', 'string', 'max:3000'], 'location' => ['nullable', 'string', 'max:160'], 'starts_at' => ['required', 'date'], 'ends_at' => ['required', 'date', 'after:starts_at'], 'status' => ['required', Rule::in(['draft', 'published'])]]);
+        $data = $request->validate(['title' => ['required', 'string', 'max:160'], 'description' => ['nullable', 'string', 'max:3000'], 'location' => ['nullable', 'string', 'max:160'], 'starts_at' => ['required', 'date'], 'ends_at' => ['required', 'date', 'after:starts_at'], 'status' => ['required', Rule::in(['draft', 'published'])]]);
+        $data['starts_at'] = CarbonImmutable::parse($data['starts_at'])->utc()->toDateTimeString();
+        $data['ends_at'] = CarbonImmutable::parse($data['ends_at'])->utc()->toDateTimeString();
+
+        return $data;
     }
 
     private function notifyPublished(Request $request, CalendarEvent $event): void
